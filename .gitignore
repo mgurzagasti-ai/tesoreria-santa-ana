@@ -1,0 +1,14 @@
+.next
+.next-prod
+node_modules
+.env
+dist-next
+coverage
+*.log
+runtime-logs
+tsconfig.tsbuildinfo
+data
+legacy-data-recovery
+prisma/dev.db
+prisma/dev.db-journal
+prisma/dev-backup-*.db

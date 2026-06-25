@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  name         String
+  role         String    @default("ADMIN")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  sessions     Session[]
+}
+
+model Session {
+  id            String   @id @default(cuid())
+  tokenHash     String   @unique
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Employee {
+  id            String         @id @default(cuid())
+  legajo        String         @unique
+  dni           String         @unique
+  apellido      String
+  nombre        String
+  categoria     String
+  cuil          String         @unique
+  fechaIngreso  DateTime
+  status        String         @default("ACTIVE")
+  openingBalanceCents Int      @default(0)
+  notes         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  movements     Movement[]
+
+  @@index([apellido, nombre])
+  @@index([status])
+}
+
+model Movement {
+  id            String       @id @default(cuid())
+  employeeId    String
+  employee      Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  type          String
+  category      String       @default("OTHER")
+  concept       String
+  voucherNumber String?
+  movementDate  DateTime
+  periodMonth   Int
+  periodYear    Int
+  amountCents   Int
+  installments  Int?
+  installmentNo Int?
+  importedFrom  String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([employeeId, movementDate])
+  @@index([periodYear, periodMonth])
+  @@index([type])
+  @@index([category])
+}

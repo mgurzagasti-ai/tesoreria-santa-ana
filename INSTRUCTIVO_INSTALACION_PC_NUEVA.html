@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Instructivo de instalacion en otra PC</title>
+    <style>
+      :root {
+        --text: #1f1a17;
+        --muted: #5f544d;
+        --line: #d9cec3;
+        --accent: #8d2016;
+        --paper: #ffffff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Georgia, "Times New Roman", serif;
+        color: var(--text);
+        background: #f1ebe4;
+      }
+
+      .page {
+        width: 210mm;
+        min-height: 297mm;
+        margin: 0 auto;
+        background: var(--paper);
+        padding: 18mm 16mm;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin: 0 0 8px;
+      }
+
+      h1 {
+        font-size: 24pt;
+        color: var(--accent);
+        border-bottom: 2px solid var(--accent);
+        padding-bottom: 8px;
+        margin-bottom: 18px;
+      }
+
+      h2 {
+        font-size: 15pt;
+        margin-top: 20px;
+      }
+
+      h3 {
+        font-size: 12pt;
+        margin-top: 16px;
+      }
+
+      p,
+      li {
+        font-size: 11pt;
+        line-height: 1.45;
+      }
+
+      p {
+        margin: 8px 0;
+      }
+
+      ul,
+      ol {
+        margin: 8px 0 8px 22px;
+        padding: 0;
+      }
+
+      li + li {
+        margin-top: 4px;
+      }
+
+      code {
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 10pt;
+        background: #f7f3ef;
+        padding: 1px 4px;
+        border-radius: 4px;
+      }
+
+      pre {
+        margin: 10px 0 14px;
+        padding: 10px 12px;
+        background: #f7f3ef;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        overflow-x: auto;
+        white-space: pre-wrap;
+      }
+
+      pre code {
+        background: transparent;
+        padding: 0;
+      }
+
+      .lead {
+        color: var(--muted);
+        margin-top: -6px;
+        margin-bottom: 18px;
+      }
+
+      .callout {
+        border: 1px solid var(--line);
+        border-left: 5px solid var(--accent);
+        padding: 10px 12px;
+        background: #fcfaf8;
+        margin: 12px 0;
+      }
+
+      .small {
+        color: var(--muted);
+      }
+
+      @page {
+        size: A4;
+        margin: 10mm;
+      }
+
+      @media print {
+        body {
+          background: #fff;
+        }
+
+        .page {
+          width: auto;
+          min-height: auto;
+          margin: 0;
+          padding: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <h1>Instructivo de instalacion en otra PC</h1>
+      <p class="lead">Guia breve para instalar Tesoreria Santa Ana en una computadora nueva con Windows y conservar los datos actuales.</p>
+
+      <h2>1. Que hay que llevar a la otra PC</h2>
+      <ul>
+        <li>La carpeta completa del proyecto <code>AppJorge</code>.</li>
+        <li>El archivo <code>prisma/dev.db</code>, porque ahi esta la base de datos actual.</li>
+        <li>El archivo <code>.env</code>.</li>
+      </ul>
+      <p>No hace falta copiar <code>node_modules</code> ni <code>.next</code>, porque se regeneran.</p>
+
+      <h2>2. Programas que hay que instalar</h2>
+      <ol>
+        <li><code>Node.js</code></li>
+        <li><code>Git</code> opcional, solo si despues queres actualizar el proyecto desde repositorio</li>
+      </ol>
+      <p>Se recomienda usar una version actual LTS de Node.js.</p>
+
+      <h3>Verificacion</h3>
+      <p>Abrir una terminal y ejecutar:</p>
+      <pre><code>node -v
+npm -v</code></pre>
+
+      <h2>3. Donde ubicar la carpeta</h2>
+      <p>Copiar el proyecto, por ejemplo, en:</p>
+      <pre><code>C:\Tesoreria\AppJorge</code></pre>
+
+      <h2>4. Ajuste obligatorio del archivo .env</h2>
+      <p>Abrir <code>.env</code> y revisar <code>DATABASE_URL</code>. Si aparece una ruta absoluta de la PC original, cambiarla.</p>
+      <p>Dejarlo asi:</p>
+      <pre><code>DATABASE_URL="file:./prisma/dev.db"
+SESSION_COOKIE_NAME="tesoreria_session"
+SESSION_TTL_HOURS="12"
+APP_NAME="Tesoreria Santa Ana"
+ADMIN_EMAIL="admin@tesoreria.local"
+ADMIN_PASSWORD="Cambiar123!"</code></pre>
+
+      <div class="callout">
+        <strong>Importante:</strong> si no corregis <code>DATABASE_URL</code>, la app no va a encontrar la base en la nueva computadora.
+      </div>
+
+      <h2>5. Instalacion paso a paso</h2>
+      <p>Abrir una terminal dentro de la carpeta del proyecto y ejecutar en este orden:</p>
+      <pre><code>npm install
+npm run prisma:generate
+npm run prisma:push</code></pre>
+
+      <h2>6. Si la base ya viene copiada</h2>
+      <p>Si copiaste <code>prisma/dev.db</code>, no hace falta importar datos. Con los comandos del punto anterior alcanza.</p>
+
+      <h2>7. Si la base no viene copiada</h2>
+      <p>La app va a arrancar vacia. En ese caso, despues de los comandos anteriores ejecutar:</p>
+      <pre><code>npm run prisma:seed-admin</code></pre>
+      <p>Eso crea el usuario administrador usando <code>ADMIN_EMAIL</code> y <code>ADMIN_PASSWORD</code> definidos en <code>.env</code>.</p>
+
+      <h2>8. Como iniciar la aplicacion</h2>
+      <pre><code>npm run dev</code></pre>
+      <p>La aplicacion queda disponible en:</p>
+      <pre><code>http://localhost:3008</code></pre>
+
+      <h2>9. Como ingresar</h2>
+      <ul>
+        <li>Email: el valor de <code>ADMIN_EMAIL</code></li>
+        <li>Clave: el valor de <code>ADMIN_PASSWORD</code></li>
+      </ul>
+
+      <h2>10. Verificacion final</h2>
+      <ol>
+        <li>Abrir <code>http://localhost:3008</code></li>
+        <li>Iniciar sesion</li>
+        <li>Verificar que aparezcan empleados</li>
+        <li>Verificar que aparezcan saldos y movimientos</li>
+      </ol>
+
+      <h2>11. Problemas comunes</h2>
+
+      <h3>Error por base de datos</h3>
+      <p>Revisar que exista el archivo <code>prisma/dev.db</code> y que en <code>.env</code> figure:</p>
+      <pre><code>DATABASE_URL="file:./prisma/dev.db"</code></pre>
+
+      <h3>Error porque no reconoce npm o node</h3>
+      <p>Significa que <code>Node.js</code> no esta instalado o no quedo agregado al sistema. Cerrar y volver a abrir la terminal. Si sigue igual, reinstalar <code>Node.js</code>.</p>
+
+      <h3>La app abre pero no hay datos</h3>
+      <p>Probablemente no se copio <code>prisma/dev.db</code>. Hay que copiar ese archivo desde la PC original o volver a cargar los datos.</p>
+
+      <h3>Error de dependencias</h3>
+      <p>Ejecutar nuevamente:</p>
+      <pre><code>npm install</code></pre>
+
+      <h2>12. Resumen corto</h2>
+      <ol>
+        <li>Instalar <code>Node.js</code></li>
+        <li>Copiar la carpeta del proyecto</li>
+        <li>Copiar <code>prisma/dev.db</code></li>
+        <li>Ajustar <code>.env</code> con <code>DATABASE_URL="file:./prisma/dev.db"</code></li>
+        <li>Ejecutar:
+          <pre><code>npm install
+npm run prisma:generate
+npm run prisma:push
+npm run dev</code></pre>
+        </li>
+        <li>Abrir <code>http://localhost:3008</code></li>
+      </ol>
+
+      <p class="small">Documento preparado para impresion en hoja A4.</p>
+    </main>
+  </body>
+</html>
