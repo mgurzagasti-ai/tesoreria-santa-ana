@@ -357,6 +357,7 @@ export default async function BalancesPage({
                 <thead>
                   <tr>
                     <th>Fecha</th>
+                    <th>Codigo</th>
                     <th>Concepto</th>
                     <th>Nro. vale</th>
                     <th>Mes</th>
@@ -368,7 +369,7 @@ export default async function BalancesPage({
                 <tbody>
                   {displayRows.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="empty-row">
+                      <td colSpan={8} className="empty-row">
                         No hay movimientos en el rango seleccionado.
                       </td>
                     </tr>
@@ -376,6 +377,7 @@ export default async function BalancesPage({
                     displayRows.map((row) => (
                       <tr key={row.id}>
                         <td>{row.movementDate.toISOString().slice(0, 10)}</td>
+                        <td>{row.code ?? "-"}</td>
                         <td className={row.signedAmountCents < 0 ? "negative-text" : undefined}>
                           {getMovementCategoryLabel(row.category)} - {row.concept}
                         </td>

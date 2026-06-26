@@ -42,7 +42,14 @@ export default async function MovementsPage() {
         <Link href="/movimientos/carga" className="panel operation-card">
           <p className="eyebrow section-eyebrow">Carga manual</p>
           <h3>Carga de haberes y descuentos</h3>
-          <p>Ingresa movimientos por legajo, categoria, concepto e importe en una pantalla dedicada.</p>
+          <p>Ingresa movimientos por legajo, concepto, codigo e importe en una pantalla dedicada.</p>
+          <span className="button ghost">Abrir tarjeta</span>
+        </Link>
+
+        <Link href={{ pathname: "/conceptos", query: { all: "1" } }} className="panel operation-card">
+          <p className="eyebrow section-eyebrow">Maestro</p>
+          <h3>ABM de Conceptos</h3>
+          <p>Da de alta, modifica o da de baja los conceptos que luego se usan en la carga manual.</p>
           <span className="button ghost">Abrir tarjeta</span>
         </Link>
       </div>

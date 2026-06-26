@@ -1,6 +1,4 @@
 import { z } from "zod";
-import { movementCategoryOptions } from "@/lib/utils";
-
 const legajoSchema = z
   .string()
   .trim()
@@ -34,8 +32,7 @@ export const employeeSchema = z.object({
 
 export const movementSchema = z.object({
   employeeId: z.string().min(1, "Empleado requerido."),
-  category: z.enum(movementCategoryOptions.map((option) => option.value) as [string, ...string[]]),
-  type: z.enum(["CREDIT", "DEBIT"]).optional(),
+  conceptId: z.string().trim().min(1, "Selecciona un concepto."),
   concept: z.string().trim().min(3, "Concepto requerido."),
   voucherNumber: z.string().trim().max(50).optional().or(z.literal("")),
   movementDate: z.string().date("Fecha invalida."),
@@ -45,12 +42,17 @@ export const movementSchema = z.object({
   installments: z.coerce.number().int().min(1).max(60).optional(),
   installmentNo: z.coerce.number().int().min(1).max(60).optional(),
   importedFrom: z.string().trim().max(120).optional().or(z.literal("")),
-}).superRefine((data, ctx) => {
-  if (data.category === "VARIOUS" && !data.type) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["type"],
-      message: "Selecciona si el movimiento suma o resta.",
-    });
-  }
+});
+
+export const conceptSchema = z.object({
+  id: z.string().optional(),
+  code: z
+    .string()
+    .trim()
+    .regex(/^\d+$/, "El codigo debe contener solo numeros.")
+    .min(1, "Codigo requerido.")
+    .max(30),
+  description: z.string().trim().min(3, "Descripcion requerida.").max(120),
+  impact: z.enum(["CREDIT", "DEBIT"]),
+  status: z.enum(["ACTIVE", "INACTIVE"]),
 });

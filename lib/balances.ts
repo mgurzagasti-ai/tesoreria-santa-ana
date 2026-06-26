@@ -4,6 +4,7 @@ type MovementForBalance = {
   id: string;
   type: string;
   category: string;
+  code: string | null;
   concept: string;
   voucherNumber: string | null;
   movementDate: Date;

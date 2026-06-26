@@ -117,6 +117,7 @@ export default async function PrintableBalancePage({
           <thead>
             <tr>
               <th>Fecha</th>
+              <th>Codigo</th>
               <th>Concepto</th>
               <th>Nro. vale</th>
               <th>Mes</th>
@@ -128,6 +129,7 @@ export default async function PrintableBalancePage({
           <tbody>
             <tr>
               <td>-</td>
+              <td>-</td>
               <td>Saldo de arranque</td>
               <td>-</td>
               <td>-</td>
@@ -138,6 +140,7 @@ export default async function PrintableBalancePage({
             {rows.map((row) => (
               <tr key={row.id}>
                 <td>{row.movementDate.toISOString().slice(0, 10)}</td>
+                <td>{row.code ?? "-"}</td>
                 <td>
                   {getMovementCategoryLabel(row.category)} {row.concept}
                 </td>

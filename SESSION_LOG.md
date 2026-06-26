@@ -17,6 +17,16 @@
 - Se mejoro la pantalla de `Saldos` y su version imprimible para mostrar por separado `Saldo inicial`, `Haberes que suman`, `Descuentos que restan`, `Neto del periodo` y saldo final.
 - Se agrego impresion multiple de saldos por lista de legajos o rango desde/hasta. La nueva vista imprime 2 empleados por hoja A4 en formato compacto para ahorrar hojas.
 
+## 2026-06-26
+
+- Se agrego a `Movement` un campo `code` opcional para guardar un codigo numerico editable por movimiento.
+- Se asignaron codigos numericos por defecto a las categorias manuales y se incorporo la nueva categoria `Gratificacion extraordinaria` con codigo sugerido `208`.
+- La nueva categoria `Gratificacion extraordinaria` se registra como movimiento que suma (`CREDIT`), y el pago posterior puede cargarse con el mismo codigo en un movimiento que reste para impactar correctamente en `Saldos`.
+- Se actualizaron `movimientos/historial`, `saldos` y las vistas imprimibles para mostrar el codigo del movimiento.
+- Se reemplazo la lista fija de conceptos manuales por un maestro `Concept` en base de datos, con `codigo`, `descripcion`, `impacto` y `estado`.
+- Se agrego `ABM de Conceptos` en el navbar, con alta, baja logica y modificacion para administrar los conceptos futuros sin tocar codigo.
+- La carga manual de movimientos ahora toma el concepto desde ese maestro, muestra el codigo y define automaticamente si suma o resta en la liquidacion.
+
 ## Como Usarlo
 
 - Agregar una entrada nueva cada vez que hagamos un arreglo, cambio relevante o decision tecnica.

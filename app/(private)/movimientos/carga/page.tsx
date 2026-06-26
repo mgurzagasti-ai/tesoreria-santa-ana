@@ -1,14 +1,18 @@
 import { MovementForm } from "@/components/movements/movement-form";
+import { getActiveConcepts } from "@/lib/concepts";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
 export default async function MovementLoadPage() {
-  const employees = await prisma.employee.findMany({
-    where: { status: "ACTIVE" },
-    orderBy: [{ apellido: "asc" }, { nombre: "asc" }],
-    select: { id: true, legajo: true, apellido: true, nombre: true },
-  });
+  const [employees, concepts] = await Promise.all([
+    prisma.employee.findMany({
+      where: { status: "ACTIVE" },
+      orderBy: [{ apellido: "asc" }, { nombre: "asc" }],
+      select: { id: true, legajo: true, apellido: true, nombre: true },
+    }),
+    getActiveConcepts(),
+  ]);
 
   return (
     <section className="stack-lg">
@@ -23,7 +27,7 @@ export default async function MovementLoadPage() {
       </div>
 
       <div className="single-panel-wrap">
-        <MovementForm employees={employees} />
+        <MovementForm employees={employees} concepts={concepts} />
       </div>
     </section>
   );

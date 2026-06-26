@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getAllConcepts } from "@/lib/concepts";
 import { prisma } from "@/lib/prisma";
 import {
   formatSignedCurrencyFromCents,
@@ -10,7 +11,7 @@ import {
 type SearchParams = Promise<{
   page?: string;
   q?: string;
-  category?: string;
+  code?: string;
   impact?: string;
 }>;
 
@@ -26,9 +27,10 @@ export default async function MovementHistoryPage({
   const params = await searchParams;
   const currentPage = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
   const query = params.q?.trim() ?? "";
-  const categoryFilter = params.category?.trim() ?? "";
+  const codeFilter = params.code?.trim() ?? "";
   const impactFilter = params.impact?.trim() ?? "";
   const today = new Date();
+  const concepts = await getAllConcepts();
   const where = {
     movementDate: {
       lte: today,
@@ -62,12 +64,17 @@ export default async function MovementHistoryPage({
                 contains: query,
               },
             },
+            {
+              code: {
+                contains: query,
+              },
+            },
           ],
         }
       : {}),
-    ...(categoryFilter
+    ...(codeFilter
       ? {
-          category: categoryFilter,
+          code: codeFilter,
         }
       : {}),
     ...(impactFilter
@@ -115,17 +122,13 @@ export default async function MovementHistoryPage({
             defaultValue={query}
             placeholder="Buscar por legajo, empleado o concepto"
           />
-          <select name="category" defaultValue={categoryFilter}>
-            <option value="">Todas las categorias</option>
-            <option value="ADVANCE">Anticipo de haberes</option>
-            <option value="VALE">Vale</option>
-            <option value="SALARY">Sueldo</option>
-            <option value="SAC">SAC</option>
-            <option value="SETTLEMENT">Cancelacion de haberes</option>
-            <option value="LIQUIDACION_FINAL">Liquidacion final</option>
-            <option value="VARIOUS">Varios</option>
-            <option value="ADJUSTMENT_DEBIT">Ajuste negativo</option>
-            <option value="ADJUSTMENT_CREDIT">Ajuste positivo</option>
+          <select name="code" defaultValue={codeFilter}>
+            <option value="">Todos los codigos</option>
+            {concepts.map((concept) => (
+              <option key={concept.id} value={concept.code}>
+                {concept.code} - {concept.description}
+              </option>
+            ))}
           </select>
           <select name="impact" defaultValue={impactFilter}>
             <option value="">Todos los impactos</option>
@@ -171,7 +174,7 @@ export default async function MovementHistoryPage({
                   query: {
                     page: safePage - 1,
                     ...(query ? { q: query } : {}),
-                    ...(categoryFilter ? { category: categoryFilter } : {}),
+                    ...(codeFilter ? { code: codeFilter } : {}),
                     ...(impactFilter ? { impact: impactFilter } : {}),
                   },
                 }}
@@ -187,7 +190,7 @@ export default async function MovementHistoryPage({
                   query: {
                     page: safePage + 1,
                     ...(query ? { q: query } : {}),
-                    ...(categoryFilter ? { category: categoryFilter } : {}),
+                    ...(codeFilter ? { code: codeFilter } : {}),
                     ...(impactFilter ? { impact: impactFilter } : {}),
                   },
                 }}
@@ -206,6 +209,7 @@ export default async function MovementHistoryPage({
                 <th>Legajo</th>
                 <th>Empleado</th>
                 <th>Categoria</th>
+                <th>Codigo</th>
                 <th>Concepto</th>
                 <th>Periodo</th>
                 <th>Impacto</th>
@@ -215,7 +219,7 @@ export default async function MovementHistoryPage({
             <tbody>
               {movements.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="empty-row">
+                  <td colSpan={9} className="empty-row">
                     No hay movimientos registrados.
                   </td>
                 </tr>
@@ -228,6 +232,7 @@ export default async function MovementHistoryPage({
                       {movement.employee.apellido}, {movement.employee.nombre}
                     </td>
                     <td>{getMovementCategoryLabel(movement.category)}</td>
+                    <td>{movement.code ?? "-"}</td>
                     <td className={movement.type === "DEBIT" ? "negative-text" : undefined}>
                       {movement.concept}
                     </td>

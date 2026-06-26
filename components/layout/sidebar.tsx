@@ -1,13 +1,11 @@
 "use client";
 
-import type { Route } from "next";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logoutAction } from "@/app/actions/auth";
 import { cn } from "@/lib/utils";
 
 type NavigationItem = {
-  href: Route;
+  href: string;
   label: string;
   exact?: boolean;
 };
@@ -15,6 +13,7 @@ type NavigationItem = {
 const navigation: NavigationItem[] = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/empleados", label: "Empleados" },
+  { href: "/conceptos", label: "ABM de Conceptos" },
   { href: "/movimientos", label: "Movimientos", exact: true },
   { href: "/movimientos/historial", label: "Historial" },
   { href: "/saldos", label: "Saldos" },
@@ -41,13 +40,13 @@ export function Sidebar() {
                 : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
           return (
-            <Link
+            <a
               key={item.href}
               href={item.href}
               className={cn("nav-link", isActive && "nav-link-active")}
             >
               {item.label}
-            </Link>
+            </a>
           );
         })}
       </nav>

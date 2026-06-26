@@ -1,7 +1,7 @@
 export type MovementFormValues = {
   employeeId?: string;
-  category?: string;
-  type?: "CREDIT" | "DEBIT";
+  conceptId?: string;
+  code?: string;
   concept?: string;
   voucherNumber?: string;
   movementDate?: string;
@@ -27,7 +27,7 @@ export const initialMovementFormState: MovementFormState = {
   message: null,
   fieldErrors: {},
   values: {
-    category: "ADVANCE",
-    type: "DEBIT",
+    conceptId: "",
+    code: "",
   },
 };

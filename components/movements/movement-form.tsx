@@ -1,12 +1,11 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import { createMovementAction } from "@/app/actions/movements";
 import {
   type MovementFieldName,
   initialMovementFormState,
 } from "@/lib/movement-form";
-import { movementCategoryOptions } from "@/lib/utils";
 
 type EmployeeOption = {
   id: string;
@@ -15,26 +14,31 @@ type EmployeeOption = {
   nombre: string;
 };
 
-const conceptSuggestionsByCategory = {
-  ADVANCE: ["ANTICIPOS DE HABERES", "ANTICIPOS DE AGUINALDO", "ADELANTO ESPECIAL"],
-  VALE: ["VALE", "VALE DE CAJA", "VALE EXTRAORDINARIO"],
-  SALARY: ["SUELDOS", "SUELDO", "HABERES DEL MES"],
-  SAC: ["SAC", "AGUINALDO", "SAC PRIMERA CUOTA", "SAC SEGUNDA CUOTA"],
-  SETTLEMENT: ["CANCELACION HABERES", "LIQUIDACION FINAL", "CANCELACION DE HABERES"],
-  LIQUIDACION_FINAL: ["LIQUIDACION FINAL", "LIQUIDACION FINAL POR BAJA", "PAGO FINAL"],
-  VARIOUS: [],
-  ADJUSTMENT_DEBIT: ["AJUSTE NEGATIVO", "DESCUENTO EXTRAORDINARIO"],
-  ADJUSTMENT_CREDIT: ["AJUSTE POSITIVO", "REINTEGRO", "DIFERENCIA A FAVOR"],
-} as const;
+type ConceptOption = {
+  id: string;
+  code: string;
+  description: string;
+  impact: string;
+};
 
-export function MovementForm({ employees }: { employees: EmployeeOption[] }) {
+export function MovementForm({
+  employees,
+  concepts,
+}: {
+  employees: EmployeeOption[];
+  concepts: ConceptOption[];
+}) {
   const [state, formAction, pending] = useActionState(createMovementAction, initialMovementFormState);
   const values = state.values;
   const [legajoQuery, setLegajoQuery] = useState("");
   const [selectedEmployeeId, setSelectedEmployeeId] = useState(values.employeeId ?? "");
-  const [selectedCategory, setSelectedCategory] = useState(values.category ?? "ADVANCE");
-  const [selectedType, setSelectedType] = useState(values.type ?? "DEBIT");
-  const [conceptValue, setConceptValue] = useState(values.concept ?? "");
+  const [selectedConceptId, setSelectedConceptId] = useState(values.conceptId ?? concepts[0]?.id ?? "");
+  const [conceptValue, setConceptValue] = useState(values.concept ?? concepts[0]?.description ?? "");
+
+  const selectedConcept = useMemo(
+    () => concepts.find((concept) => concept.id === selectedConceptId) ?? concepts[0] ?? null,
+    [concepts, selectedConceptId],
+  );
 
   useEffect(() => {
     if (state.status === "success") {
@@ -42,20 +46,19 @@ export function MovementForm({ employees }: { employees: EmployeeOption[] }) {
       form?.reset();
       setLegajoQuery("");
       setSelectedEmployeeId("");
-      setSelectedCategory("ADVANCE");
-      setSelectedType("DEBIT");
-      setConceptValue("");
+      setSelectedConceptId(concepts[0]?.id ?? "");
+      setConceptValue(concepts[0]?.description ?? "");
     }
-  }, [state.status]);
+  }, [concepts, state.status]);
 
   useEffect(() => {
     if (state.status === "error") {
+      const nextConceptId = values.conceptId ?? concepts[0]?.id ?? "";
       setSelectedEmployeeId(values.employeeId ?? "");
-      setSelectedCategory(values.category ?? "ADVANCE");
-      setSelectedType(values.type ?? "DEBIT");
-      setConceptValue(values.concept ?? "");
+      setSelectedConceptId(nextConceptId);
+      setConceptValue(values.concept ?? concepts.find((concept) => concept.id === nextConceptId)?.description ?? "");
     }
-  }, [state.status, values.category, values.concept, values.employeeId, values.type]);
+  }, [concepts, state.status, values.concept, values.conceptId, values.employeeId]);
 
   useEffect(() => {
     const normalizedLegajo = legajoQuery.trim();
@@ -77,10 +80,6 @@ export function MovementForm({ employees }: { employees: EmployeeOption[] }) {
   const filteredEmployees = employees.filter((employee) =>
     employee.legajo.includes(legajoQuery.trim()),
   );
-  const conceptSuggestions = conceptSuggestionsByCategory[
-    selectedCategory as keyof typeof conceptSuggestionsByCategory
-  ] ?? [];
-  const isVariousCategory = selectedCategory === "VARIOUS";
 
   return (
     <form id="movement-form" action={formAction} className="panel form-grid">
@@ -118,67 +117,41 @@ export function MovementForm({ employees }: { employees: EmployeeOption[] }) {
         {fieldError("employeeId") ? <small className="field-error-text">{fieldError("employeeId")}</small> : null}
       </label>
 
-      <label className={fieldClassName("category")}>
-        <span>Categoria</span>
+      <label className={fieldClassName("conceptId")}>
+        <span>Concepto</span>
         <select
-          name="category"
-          value={selectedCategory}
+          name="conceptId"
+          value={selectedConceptId}
           onChange={(event) => {
-            const nextCategory = event.target.value;
-            setSelectedCategory(nextCategory);
-            if (nextCategory !== "VARIOUS") {
-              setSelectedType("DEBIT");
-            }
+            const nextConceptId = event.target.value;
+            const nextConcept = concepts.find((concept) => concept.id === nextConceptId);
+
+            setSelectedConceptId(nextConceptId);
+            setConceptValue(nextConcept?.description ?? "");
           }}
         >
-          {movementCategoryOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
+          <option value="" disabled>
+            Seleccionar concepto
+          </option>
+          {concepts.map((concept) => (
+            <option key={concept.id} value={concept.id}>
+              {concept.code} - {concept.description}
             </option>
           ))}
         </select>
-        {fieldError("category") ? <small className="field-error-text">{fieldError("category")}</small> : null}
+        {fieldError("conceptId") ? <small className="field-error-text">{fieldError("conceptId")}</small> : null}
       </label>
 
-      {isVariousCategory ? (
-        <label className={fieldClassName("type")}>
-          <span>Impacto</span>
-          <select name="type" value={selectedType} onChange={(event) => setSelectedType(event.target.value as "CREDIT" | "DEBIT")}>
-            <option value="DEBIT">Descuento</option>
-            <option value="CREDIT">A favor</option>
-          </select>
-          {fieldError("type") ? <small className="field-error-text">{fieldError("type")}</small> : null}
-        </label>
-      ) : (
-        <input type="hidden" name="type" value="" />
-      )}
-
-      {!isVariousCategory ? (
-        <label className={fieldClassName("concept")}>
-          <span>Concepto sugerido</span>
-          <select
-            value={conceptSuggestions.some((concept) => concept === conceptValue) ? conceptValue : ""}
-            onChange={(event) => setConceptValue(event.target.value)}
-          >
-            <option value="">Elegir sugerencia</option>
-            {conceptSuggestions.map((concept) => (
-              <option key={concept} value={concept}>
-                {concept}
-              </option>
-            ))}
-          </select>
-        </label>
-      ) : null}
+      <label className={fieldClassName("code")}>
+        <span>Codigo</span>
+        <input name="code" value={selectedConcept?.code ?? ""} readOnly />
+      </label>
 
       <label className={fieldClassName("concept")}>
-        <span>{isVariousCategory ? "Descripcion breve" : "Concepto"}</span>
+        <span>Descripcion del movimiento</span>
         <input
           name="concept"
-          placeholder={
-            isVariousCategory
-              ? "Ej: reintegro menor, diferencia, gasto varios..."
-              : "Anticipo de haberes, sueldo, SAC..."
-          }
+          placeholder="Descripcion que quedara registrada"
           required
           value={conceptValue}
           onChange={(event) => setConceptValue(event.target.value)}
@@ -186,19 +159,19 @@ export function MovementForm({ employees }: { employees: EmployeeOption[] }) {
         {fieldError("concept") ? <small className="field-error-text">{fieldError("concept")}</small> : null}
       </label>
 
-      <label className={fieldClassName("movementDate")}>
-        <span>Fecha</span>
-        <input name="movementDate" type="date" required defaultValue={values.movementDate} />
-        {fieldError("movementDate") ? (
-          <small className="field-error-text">{fieldError("movementDate")}</small>
-        ) : null}
-      </label>
-
       <label className={fieldClassName("voucherNumber")}>
         <span>Nro. vale / comprobante</span>
         <input name="voucherNumber" placeholder="Opcional" defaultValue={values.voucherNumber} />
         {fieldError("voucherNumber") ? (
           <small className="field-error-text">{fieldError("voucherNumber")}</small>
+        ) : null}
+      </label>
+
+      <label className={fieldClassName("movementDate")}>
+        <span>Fecha</span>
+        <input name="movementDate" type="date" required defaultValue={values.movementDate} />
+        {fieldError("movementDate") ? (
+          <small className="field-error-text">{fieldError("movementDate")}</small>
         ) : null}
       </label>
 
@@ -252,6 +225,11 @@ export function MovementForm({ employees }: { employees: EmployeeOption[] }) {
         {fieldError("installmentNo") ? (
           <small className="field-error-text">{fieldError("installmentNo")}</small>
         ) : null}
+      </label>
+
+      <label className={fieldClassName("code")}>
+        <span>Impacto en liquidacion</span>
+        <input value={selectedConcept?.impact === "CREDIT" ? "Suma" : "Resta"} readOnly />
       </label>
 
       <input type="hidden" name="importedFrom" value={values.importedFrom ?? ""} />

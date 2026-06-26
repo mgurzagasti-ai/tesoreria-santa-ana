@@ -30,6 +30,7 @@ type EmployeeWithMovements = {
     id: string;
     type: string;
     category: string;
+    code: string | null;
     concept: string;
     voucherNumber: string | null;
     movementDate: Date;
@@ -211,6 +212,7 @@ export default async function PrintableMultipleBalancesPage({
                     <thead>
                       <tr>
                         <th>Fecha</th>
+                        <th>Codigo</th>
                         <th>Concepto</th>
                         <th>Mes</th>
                         <th>Importe</th>
@@ -220,6 +222,7 @@ export default async function PrintableMultipleBalancesPage({
                     <tbody>
                       <tr>
                         <td>-</td>
+                        <td>-</td>
                         <td>Saldo de arranque</td>
                         <td>-</td>
                         <td>{formatSignedCurrencyFromCents(employee.openingBalanceCents)}</td>
@@ -228,6 +231,7 @@ export default async function PrintableMultipleBalancesPage({
                       {summary.rows.map((row) => (
                         <tr key={row.id}>
                           <td>{row.movementDate.toISOString().slice(0, 10)}</td>
+                          <td>{row.code ?? "-"}</td>
                           <td>
                             {getMovementCategoryLabel(row.category)} - {row.concept}
                           </td>

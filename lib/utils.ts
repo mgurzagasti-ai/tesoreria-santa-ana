@@ -3,15 +3,21 @@ export function cn(...values: Array<string | false | null | undefined>) {
 }
 
 export const movementCategoryOptions = [
-  { value: "ADVANCE", label: "Anticipo de haberes", type: "DEBIT" },
-  { value: "VALE", label: "Vale", type: "DEBIT" },
-  { value: "SALARY", label: "Sueldo", type: "CREDIT" },
-  { value: "SAC", label: "SAC", type: "CREDIT" },
-  { value: "SETTLEMENT", label: "Cancelacion de haberes", type: "CREDIT" },
-  { value: "LIQUIDACION_FINAL", label: "Liquidacion final", type: "CREDIT" },
-  { value: "VARIOUS", label: "Varios", type: "DEBIT" },
-  { value: "ADJUSTMENT_DEBIT", label: "Ajuste negativo", type: "DEBIT" },
-  { value: "ADJUSTMENT_CREDIT", label: "Ajuste positivo", type: "CREDIT" },
+  { value: "ADVANCE", label: "Anticipo de haberes", type: "DEBIT", defaultCode: "101" },
+  { value: "VALE", label: "Vale", type: "DEBIT", defaultCode: "102" },
+  { value: "SALARY", label: "Sueldo", type: "CREDIT", defaultCode: "201" },
+  { value: "SAC", label: "SAC", type: "CREDIT", defaultCode: "202" },
+  { value: "SETTLEMENT", label: "Cancelacion de haberes", type: "CREDIT", defaultCode: "203" },
+  { value: "LIQUIDACION_FINAL", label: "Liquidacion final", type: "CREDIT", defaultCode: "204" },
+  {
+    value: "EXTRAORDINARY_BONUS",
+    label: "Gratificacion extraordinaria",
+    type: "CREDIT",
+    defaultCode: "208",
+  },
+  { value: "VARIOUS", label: "Varios", type: "DEBIT", defaultCode: "901" },
+  { value: "ADJUSTMENT_DEBIT", label: "Ajuste negativo", type: "DEBIT", defaultCode: "902" },
+  { value: "ADJUSTMENT_CREDIT", label: "Ajuste positivo", type: "CREDIT", defaultCode: "903" },
 ] as const;
 
 export type MovementCategory = (typeof movementCategoryOptions)[number]["value"];
@@ -69,6 +75,10 @@ export function getMovementCategoryLabel(category: string) {
 
 export function inferMovementType(category: string) {
   return movementCategoryOptions.find((option) => option.value === category)?.type ?? "DEBIT";
+}
+
+export function getDefaultMovementCode(category: string) {
+  return movementCategoryOptions.find((option) => option.value === category)?.defaultCode ?? "";
 }
 
 export function getSignedAmountCents(movement: { type: string; amountCents: number }) {

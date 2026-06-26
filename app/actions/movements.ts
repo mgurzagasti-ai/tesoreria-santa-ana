@@ -9,14 +9,14 @@ import {
   initialMovementFormState,
 } from "@/lib/movement-form";
 import { prisma } from "@/lib/prisma";
-import { inferMovementType, toCents } from "@/lib/utils";
+import { toCents } from "@/lib/utils";
 import { movementSchema } from "@/lib/validations";
 
 function getSubmittedValues(formData: FormData) {
   return {
     employeeId: String(formData.get("employeeId") ?? ""),
-    category: String(formData.get("category") ?? "ADVANCE"),
-    type: String(formData.get("type") ?? ""),
+    conceptId: String(formData.get("conceptId") ?? ""),
+    code: String(formData.get("code") ?? ""),
     concept: String(formData.get("concept") ?? ""),
     voucherNumber: String(formData.get("voucherNumber") ?? ""),
     movementDate: String(formData.get("movementDate") ?? ""),
@@ -34,7 +34,6 @@ function toMovementFormValues(
 ): MovementFormValues {
   return {
     ...values,
-    type: values.type === "CREDIT" || values.type === "DEBIT" ? values.type : undefined,
   };
 }
 
@@ -47,8 +46,8 @@ export async function createMovementAction(
 
   const parsed = movementSchema.safeParse({
     employeeId: submittedValues.employeeId,
-    category: submittedValues.category,
-    type: submittedValues.type || undefined,
+    conceptId: submittedValues.conceptId,
+    code: submittedValues.code,
     concept: submittedValues.concept,
     voucherNumber: submittedValues.voucherNumber,
     movementDate: submittedValues.movementDate,
@@ -79,13 +78,29 @@ export async function createMovementAction(
   }
 
   try {
+    const selectedConcept = await prisma.concept.findFirst({
+      where: {
+        id: parsed.data.conceptId,
+        status: "ACTIVE",
+      },
+    });
+
+    if (!selectedConcept) {
+      return {
+        status: "error",
+        message: "El concepto seleccionado no esta disponible.",
+        fieldErrors: { conceptId: "Selecciona un concepto activo." },
+        values: toMovementFormValues(submittedValues),
+      };
+    }
+
     await prisma.movement.create({
       data: {
         employeeId: parsed.data.employeeId,
-        type: parsed.data.category === "VARIOUS"
-          ? (parsed.data.type ?? "DEBIT")
-          : inferMovementType(parsed.data.category),
-        category: parsed.data.category,
+        conceptId: selectedConcept.id,
+        type: selectedConcept.impact,
+        category: selectedConcept.description,
+        code: selectedConcept.code,
         concept: parsed.data.concept.toUpperCase(),
         voucherNumber: parsed.data.voucherNumber || null,
         movementDate: new Date(parsed.data.movementDate),
