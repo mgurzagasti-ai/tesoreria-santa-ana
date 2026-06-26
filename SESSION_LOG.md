@@ -26,6 +26,7 @@
 - Se reemplazo la lista fija de conceptos manuales por un maestro `Concept` en base de datos, con `codigo`, `descripcion`, `impacto` y `estado`.
 - Se agrego `ABM de Conceptos` en el navbar, con alta, baja logica y modificacion para administrar los conceptos futuros sin tocar codigo.
 - La carga manual de movimientos ahora toma el concepto desde ese maestro, muestra el codigo y define automaticamente si suma o resta en la liquidacion.
+- Se ajusto la importacion Excel de haberes para buscar primero el `codigo` del concepto activo (por ejemplo `208`) y tomar desde ese maestro el impacto `CREDIT/DEBIT`; si no encuentra codigo, recien ahi hace fallback por descripcion para no romper planillas viejas.
 
 ## Como Usarlo
 

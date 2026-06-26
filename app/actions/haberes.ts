@@ -12,6 +12,7 @@ import { prisma } from "@/lib/prisma";
 function buildMovementKey(row: {
   employeeId: string;
   category: string;
+  code?: string | null;
   concept: string;
   movementDate: Date;
   periodMonth: number;
@@ -22,7 +23,7 @@ function buildMovementKey(row: {
   return [
     row.employeeId,
     row.category,
-    row.concept,
+    row.code?.trim() || row.concept,
     row.movementDate.toISOString().slice(0, 10),
     row.periodMonth,
     row.periodYear,
@@ -61,6 +62,10 @@ export async function importHaberesExcelAction(
 
   const employees = await prisma.employee.findMany({
     select: { id: true, legajo: true, apellido: true, nombre: true },
+  });
+  const concepts = await prisma.concept.findMany({
+    where: { status: "ACTIVE" },
+    select: { id: true, code: true, description: true, impact: true },
   });
 
   const fileBuffer = await file.arrayBuffer();
@@ -114,7 +119,7 @@ export async function importHaberesExcelAction(
     };
   }
 
-  const { parsedRows, issues } = await parseHaberesWorkbook(fileBuffer, file.name, employees);
+  const { parsedRows, issues } = await parseHaberesWorkbook(fileBuffer, file.name, employees, concepts);
 
   if (parsedRows.length === 0) {
     return {
@@ -134,6 +139,7 @@ export async function importHaberesExcelAction(
     select: {
       employeeId: true,
       category: true,
+      code: true,
       concept: true,
       movementDate: true,
       periodMonth: true,

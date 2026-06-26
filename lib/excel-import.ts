@@ -8,10 +8,19 @@ type EmployeeLookup = {
   nombre: string;
 };
 
+type ConceptLookup = {
+  id: string;
+  code: string;
+  description: string;
+  impact: string;
+};
+
 type ParsedMovementRow = {
   employeeId: string;
   employeeLabel: string;
+  conceptId: string | null;
   category: string;
+  code: string | null;
   type: string;
   concept: string;
   voucherNumber: string | null;
@@ -405,6 +414,45 @@ function getCell(row: unknown[], index: number | undefined) {
   return index === undefined ? "" : row[index];
 }
 
+function normalizeCode(value: unknown) {
+  return cleanString(value).replace(/\s+/g, "").toUpperCase();
+}
+
+function findConceptMatch(rawConcept: unknown, rawCategory: unknown, concepts: ConceptLookup[]) {
+  const conceptCodeMap = new Map(concepts.map((concept) => [normalizeCode(concept.code), concept]));
+  const candidateValues = [rawConcept, rawCategory]
+    .map((value) => cleanString(value))
+    .filter(Boolean);
+
+  for (const candidate of candidateValues) {
+    const exactMatch = conceptCodeMap.get(normalizeCode(candidate));
+    if (exactMatch) {
+      return exactMatch;
+    }
+
+    const codeTokens = candidate.match(/\b[0-9A-Za-z]+\b/g) ?? [];
+    for (const token of codeTokens) {
+      const tokenMatch = conceptCodeMap.get(normalizeCode(token));
+      if (tokenMatch) {
+        return tokenMatch;
+      }
+    }
+  }
+
+  const normalizedDescriptionMap = new Map(
+    concepts.map((concept) => [normalizeText(concept.description), concept]),
+  );
+
+  for (const candidate of candidateValues) {
+    const descriptionMatch = normalizedDescriptionMap.get(normalizeText(candidate));
+    if (descriptionMatch) {
+      return descriptionMatch;
+    }
+  }
+
+  return null;
+}
+
 function resolveDefaultCategoryFromConcept(concept: string) {
   const normalized = normalizeText(concept);
 
@@ -537,6 +585,7 @@ export async function parseHaberesWorkbook(
   fileBuffer: ArrayBuffer,
   fileName: string,
   employees: EmployeeLookup[],
+  concepts: ConceptLookup[],
 ) {
   const workbook = XLSX.read(fileBuffer, { type: "array", cellDates: true });
   const firstSheetName = workbook.SheetNames[0];
@@ -616,13 +665,21 @@ export async function parseHaberesWorkbook(
       new Date(fallback.movementDate.getTime());
 
     const rawConcept = cleanString(getCell(row, columns.concepto));
-    const concept = (rawConcept || fallback.concept).toUpperCase();
+    const matchedConcept = findConceptMatch(rawConcept, getCell(row, columns.categoria), concepts);
+    const concept = (matchedConcept?.description || rawConcept || fallback.concept).toUpperCase();
     const rawPeriodValue = getCell(row, columns.periodMonth);
     const rawPeriodYearValue = getCell(row, columns.periodYear);
     const derivedPeriodFromPeriodCell = derivePeriodFromText(cleanString(rawPeriodValue));
     const derivedPeriodFromConcept = derivePeriodFromText(rawConcept);
 
     const category =
+      (matchedConcept
+        ? {
+            value: matchedConcept.description,
+            label: matchedConcept.description,
+            type: matchedConcept.impact,
+          }
+        : null) ??
       resolveCategory(getCell(row, columns.categoria), concept) ??
       resolveDefaultCategoryFromConcept(concept || fallback.concept) ??
       fallback.category;
@@ -657,7 +714,9 @@ export async function parseHaberesWorkbook(
     parsedRows.push({
       employeeId: employee.id,
       employeeLabel: `${employee.legajo} - ${employee.apellido}, ${employee.nombre}`,
+      conceptId: matchedConcept?.id ?? null,
       category: category.value,
+      code: matchedConcept?.code ?? null,
       type: category.type,
       concept,
       voucherNumber: cleanString(getCell(row, columns.voucherNumber)) || null,
