@@ -7,7 +7,7 @@ import {
   formatCurrencyFromCents,
   formatSignedCurrencyFromCents,
   getBalanceLabel,
-  getMovementCategoryLabel,
+  getMovementDisplayLabel,
   getMonthName,
 } from "@/lib/utils";
 
@@ -142,7 +142,7 @@ export default async function PrintableBalancePage({
                 <td>{row.movementDate.toISOString().slice(0, 10)}</td>
                 <td>{row.code ?? "-"}</td>
                 <td>
-                  {getMovementCategoryLabel(row.category)} {row.concept}
+                  {getMovementDisplayLabel(row.category, row.concept)}
                 </td>
                 <td>{row.voucherNumber ?? "-"}</td>
                 <td>{getMonthName(row.periodMonth)}</td>

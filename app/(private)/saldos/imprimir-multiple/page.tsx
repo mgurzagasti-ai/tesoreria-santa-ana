@@ -5,8 +5,8 @@ import { prisma } from "@/lib/prisma";
 import {
   formatSignedCurrencyFromCents,
   getBalanceLabel,
+  getMovementDisplayLabel,
   getMonthName,
-  getMovementCategoryLabel,
 } from "@/lib/utils";
 
 type SearchParams = Promise<{
@@ -233,7 +233,7 @@ export default async function PrintableMultipleBalancesPage({
                           <td>{row.movementDate.toISOString().slice(0, 10)}</td>
                           <td>{row.code ?? "-"}</td>
                           <td>
-                            {getMovementCategoryLabel(row.category)} - {row.concept}
+                            {getMovementDisplayLabel(row.category, row.concept)}
                           </td>
                           <td>
                             {getMonthName(row.periodMonth)} {row.periodYear}

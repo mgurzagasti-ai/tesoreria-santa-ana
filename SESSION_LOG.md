@@ -27,6 +27,8 @@
 - Se agrego `ABM de Conceptos` en el navbar, con alta, baja logica y modificacion para administrar los conceptos futuros sin tocar codigo.
 - La carga manual de movimientos ahora toma el concepto desde ese maestro, muestra el codigo y define automaticamente si suma o resta en la liquidacion.
 - Se ajusto la importacion Excel de haberes para buscar primero el `codigo` del concepto activo (por ejemplo `208`) y tomar desde ese maestro el impacto `CREDIT/DEBIT`; si no encuentra codigo, recien ahi hace fallback por descripcion para no romper planillas viejas.
+- Se corrigieron `245` movimientos importados desde `APP.xlsx` que habian quedado como `HABERES/SALARY` sin codigo: se reasignaron al concepto activo `208 - GRATIFICACION EXTRAORDINARIA` sin borrar registros.
+- Se ajustaron las vistas de `Saldos` para no repetir `categoria - concepto` cuando ambos textos son iguales; ahora en esos casos se muestra una sola descripcion.
 
 ## Como Usarlo
 

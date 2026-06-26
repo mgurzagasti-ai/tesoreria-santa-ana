@@ -73,6 +73,21 @@ export function getMovementCategoryLabel(category: string) {
   return movementCategoryOptions.find((option) => option.value === category)?.label ?? category;
 }
 
+export function getMovementDisplayLabel(category: string, concept: string) {
+  const categoryLabel = getMovementCategoryLabel(category).trim();
+  const conceptLabel = concept.trim();
+
+  if (!conceptLabel) {
+    return categoryLabel;
+  }
+
+  if (categoryLabel.localeCompare(conceptLabel, "es", { sensitivity: "accent" }) === 0) {
+    return conceptLabel;
+  }
+
+  return `${categoryLabel} - ${conceptLabel}`;
+}
+
 export function inferMovementType(category: string) {
   return movementCategoryOptions.find((option) => option.value === category)?.type ?? "DEBIT";
 }
