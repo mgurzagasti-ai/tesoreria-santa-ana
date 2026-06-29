@@ -81,6 +81,10 @@ export function getMovementDisplayLabel(category: string, concept: string) {
     return categoryLabel;
   }
 
+  if (categoryLabel.toUpperCase() === "MANUAL") {
+    return conceptLabel;
+  }
+
   if (categoryLabel.localeCompare(conceptLabel, "es", { sensitivity: "accent" }) === 0) {
     return conceptLabel;
   }

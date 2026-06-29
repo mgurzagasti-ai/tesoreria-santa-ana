@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export default async function HaberesPage() {
   const today = new Date();
-  const [employees, movements] = await Promise.all([
+  const [employees, movements, concepts] = await Promise.all([
     prisma.employee.findMany({
       where: { status: "ACTIVE" },
       orderBy: [{ apellido: "asc" }, { nombre: "asc" }],
@@ -26,6 +26,11 @@ export default async function HaberesPage() {
         },
       },
     }),
+    prisma.concept.findMany({
+      where: { status: "ACTIVE" },
+      orderBy: [{ impact: "asc" }, { code: "asc" }],
+      select: { id: true, code: true, description: true, impact: true },
+    }),
   ]);
 
   const salaryCount = movements.filter(
@@ -41,6 +46,10 @@ export default async function HaberesPage() {
         <div>
           <p className="eyebrow section-eyebrow">Haberes</p>
           <h2>Carga de haberes del personal</h2>
+          <p className="muted">
+            Importa el Excel desde la pestana correcta. En cada carga eliges el concepto y el archivo
+            solo necesita legajo, apellido y nombre, y monto.
+          </p>
         </div>
       </div>
 
@@ -108,7 +117,7 @@ export default async function HaberesPage() {
           </div>
         </section>
 
-        <ExcelImportForm />
+        <ExcelImportForm concepts={concepts} />
       </div>
     </section>
   );

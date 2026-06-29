@@ -3,6 +3,9 @@ export type HaberesImportFormState = {
   message: string | null;
   fieldErrors: {
     file?: string;
+    importKind?: string;
+    conceptId?: string;
+    conceptDescription?: string;
   };
 };
 

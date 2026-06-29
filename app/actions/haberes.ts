@@ -9,6 +9,13 @@ import {
 import { parseBalanceWorkbook, parseHaberesWorkbook } from "@/lib/excel-import";
 import { prisma } from "@/lib/prisma";
 
+const MANUAL_CONCEPT_VALUE = "__MANUAL__";
+
+const importKindLabels = {
+  HABERES: "haberes",
+  DESCUENTOS: "descuentos",
+} as const;
+
 function buildMovementKey(row: {
   employeeId: string;
   category: string;
@@ -38,6 +45,44 @@ export async function importHaberesExcelAction(
 ): Promise<HaberesImportFormState> {
   await requireUser();
 
+  const rawImportKind = String(formData.get("importKind") ?? "HABERES").toUpperCase();
+  const importKind =
+    rawImportKind === "HABERES" || rawImportKind === "DESCUENTOS"
+      ? rawImportKind
+      : null;
+
+  if (!importKind) {
+    return {
+      status: "error",
+      message: "Selecciona si el archivo corresponde a haberes o descuentos.",
+      fieldErrors: {
+        importKind: "Selecciona una pestana valida.",
+      },
+    };
+  }
+
+  const conceptId = String(formData.get("conceptId") ?? "").trim();
+  const conceptDescription = String(formData.get("conceptDescription") ?? "").trim();
+  if (!conceptId) {
+    return {
+      status: "error",
+      message: "Selecciona el concepto que corresponde a la carga.",
+      fieldErrors: {
+        conceptId: "Selecciona un concepto.",
+      },
+    };
+  }
+
+  if (!conceptDescription) {
+    return {
+      status: "error",
+      message: "Escribe la descripcion que quieres usar en la carga.",
+      fieldErrors: {
+        conceptDescription: "Escribe una descripcion.",
+      },
+    };
+  }
+
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
     return {
@@ -63,10 +108,48 @@ export async function importHaberesExcelAction(
   const employees = await prisma.employee.findMany({
     select: { id: true, legajo: true, apellido: true, nombre: true },
   });
-  const concepts = await prisma.concept.findMany({
-    where: { status: "ACTIVE" },
-    select: { id: true, code: true, description: true, impact: true },
-  });
+  const expectedImpact = importKind === "HABERES" ? "CREDIT" : "DEBIT";
+  const selectedConcept =
+    conceptId === MANUAL_CONCEPT_VALUE
+      ? null
+      : await prisma.concept.findFirst({
+          where: { id: conceptId, status: "ACTIVE" },
+          select: { id: true, code: true, description: true, impact: true },
+        });
+
+  if (conceptId !== MANUAL_CONCEPT_VALUE && !selectedConcept) {
+    return {
+      status: "error",
+      message: "El concepto elegido no esta disponible.",
+      fieldErrors: {
+        conceptId: "Selecciona un concepto activo.",
+      },
+    };
+  }
+
+  if (selectedConcept && selectedConcept.impact !== expectedImpact) {
+    return {
+      status: "error",
+      message:
+        importKind === "HABERES"
+          ? "La carga de haberes solo acepta conceptos que suman."
+          : "La carga de descuentos solo acepta conceptos que restan.",
+      fieldErrors: {
+        conceptId:
+          importKind === "HABERES"
+            ? "Selecciona un concepto de haberes."
+            : "Selecciona un concepto de descuentos.",
+      },
+    };
+  }
+
+  const resolvedConcept = {
+    id: selectedConcept?.id ?? null,
+    code: selectedConcept?.code ?? null,
+    category: selectedConcept?.description ?? "MANUAL",
+    impact: selectedConcept?.impact ?? expectedImpact,
+    description: conceptDescription.toUpperCase(),
+  };
 
   const fileBuffer = await file.arrayBuffer();
   const balanceImport = await parseBalanceWorkbook(fileBuffer, employees);
@@ -119,7 +202,12 @@ export async function importHaberesExcelAction(
     };
   }
 
-  const { parsedRows, issues } = await parseHaberesWorkbook(fileBuffer, file.name, employees, concepts);
+  const { parsedRows, issues } = await parseHaberesWorkbook(
+    fileBuffer,
+    file.name,
+    employees,
+    resolvedConcept,
+  );
 
   if (parsedRows.length === 0) {
     return {
@@ -169,7 +257,7 @@ export async function importHaberesExcelAction(
   const issuePreview = issues.slice(0, 3).map((issue) => `Fila ${issue.rowNumber}: ${issue.message}`);
 
   const parts = [
-    `Importacion finalizada. Nuevos registros: ${importedCount}.`,
+    `Importacion de ${importKindLabels[importKind]} finalizada para ${resolvedConcept.description}. Nuevos registros: ${importedCount}.`,
     duplicatedCount > 0 ? `Omitidos por duplicado: ${duplicatedCount}.` : null,
     issues.length > 0 ? `Observaciones: ${issues.length}. ${issuePreview.join(" | ")}` : null,
   ].filter(Boolean);

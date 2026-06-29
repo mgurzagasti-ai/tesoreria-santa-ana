@@ -8,12 +8,15 @@ type EmployeeLookup = {
   nombre: string;
 };
 
-type ConceptLookup = {
-  id: string;
-  code: string;
+type ImportConceptLookup = {
+  id: string | null;
+  code: string | null;
+  category: string;
   description: string;
   impact: string;
 };
+
+type ConceptLookup = ImportConceptLookup;
 
 type ParsedMovementRow = {
   employeeId: string;
@@ -457,6 +460,14 @@ function resolveDefaultCategoryFromConcept(concept: string) {
   const normalized = normalizeText(concept);
 
   if (
+    normalized.includes("neto a cobrar") ||
+    normalized === "neto" ||
+    normalized.includes("neto")
+  ) {
+    return salaryCategory;
+  }
+
+  if (
     normalized.includes("sac") ||
     normalized.includes("aguinaldo")
   ) {
@@ -585,7 +596,7 @@ export async function parseHaberesWorkbook(
   fileBuffer: ArrayBuffer,
   fileName: string,
   employees: EmployeeLookup[],
-  concepts: ConceptLookup[],
+  selectedConcept: ImportConceptLookup,
 ) {
   const workbook = XLSX.read(fileBuffer, { type: "array", cellDates: true });
   const firstSheetName = workbook.SheetNames[0];
@@ -664,36 +675,21 @@ export async function parseHaberesWorkbook(
       excelDateToIso(getCell(row, columns.fecha)) ??
       new Date(fallback.movementDate.getTime());
 
-    const rawConcept = cleanString(getCell(row, columns.concepto));
-    const matchedConcept = findConceptMatch(rawConcept, getCell(row, columns.categoria), concepts);
-    const concept = (matchedConcept?.description || rawConcept || fallback.concept).toUpperCase();
     const rawPeriodValue = getCell(row, columns.periodMonth);
     const rawPeriodYearValue = getCell(row, columns.periodYear);
     const derivedPeriodFromPeriodCell = derivePeriodFromText(cleanString(rawPeriodValue));
-    const derivedPeriodFromConcept = derivePeriodFromText(rawConcept);
-
-    const category =
-      (matchedConcept
-        ? {
-            value: matchedConcept.description,
-            label: matchedConcept.description,
-            type: matchedConcept.impact,
-          }
-        : null) ??
-      resolveCategory(getCell(row, columns.categoria), concept) ??
-      resolveDefaultCategoryFromConcept(concept || fallback.concept) ??
-      fallback.category;
+    const derivedPeriodFromFile = derivePeriodFromText(fileName);
 
     const month =
       parseMonth(rawPeriodValue, null) ??
       parseMonth(rawPeriodYearValue, null) ??
       derivedPeriodFromPeriodCell.month ??
-      derivedPeriodFromConcept.month ??
+      derivedPeriodFromFile.month ??
       movementDate.getMonth() + 1;
     const year =
       parseYear(rawPeriodYearValue, null) ??
       derivedPeriodFromPeriodCell.year ??
-      derivedPeriodFromConcept.year ??
+      derivedPeriodFromFile.year ??
       movementDate.getFullYear();
 
     const amountRaw = getCell(row, columns.amount);
@@ -714,12 +710,12 @@ export async function parseHaberesWorkbook(
     parsedRows.push({
       employeeId: employee.id,
       employeeLabel: `${employee.legajo} - ${employee.apellido}, ${employee.nombre}`,
-      conceptId: matchedConcept?.id ?? null,
-      category: category.value,
-      code: matchedConcept?.code ?? null,
-      type: category.type,
-      concept,
-      voucherNumber: cleanString(getCell(row, columns.voucherNumber)) || null,
+      conceptId: selectedConcept.id,
+      category: selectedConcept.category,
+      code: selectedConcept.code,
+      type: selectedConcept.impact,
+      concept: selectedConcept.description.toUpperCase(),
+      voucherNumber: null,
       movementDate,
       periodMonth: month,
       periodYear: year,

@@ -30,6 +30,23 @@
 - Se corrigieron `245` movimientos importados desde `APP.xlsx` que habian quedado como `HABERES/SALARY` sin codigo: se reasignaron al concepto activo `208 - GRATIFICACION EXTRAORDINARIA` sin borrar registros.
 - Se ajustaron las vistas de `Saldos` para no repetir `categoria - concepto` cuando ambos textos son iguales; ahora en esos casos se muestra una sola descripcion.
 
+## 2026-06-29
+
+- Se agrego memoria persistente del proyecto en `PROJECT_MEMORY.md` y se reforzo su uso como punto de arranque para futuras sesiones.
+- Se intento primero un flujo nuevo en `Movimientos` para separar `items que suman` y `items que restan`, pero despues se descarto como pantalla principal porque no era lo que necesitaba la operadora.
+- El flujo correcto quedo en `/haberes`: el importador Excel ahora tiene dos pestanas, `Carga de haberes` y `Carga de descuentos`.
+- `Carga de haberes` se usa para conceptos que suman, incluyendo `Neto a cobrar`, `Sueldos`, `Aguinaldo` y `SAC`.
+- `Carga de descuentos` se usa para conceptos que restan, incluyendo anticipos, vales y otros descuentos.
+- Se elimino del navbar el item `ABM de Conceptos`; el acceso al maestro sigue disponible desde `Movimientos`.
+- Se eliminaron de `prisma/dev.db` los `245` movimientos mal cargados como `SALARY/HABERES` del `2026-06-25` (periodo `05/2026`, `$ 26.000,00`) y antes se dejo respaldo en `prisma/dev-backup-before-delete-sueldo-haberes-20260629.db`.
+- Se rehizo la logica de `/haberes` para trabajar con Excel simple (`legajo`, `apellido y nombre`, `monto`) y tomar el concepto desde la pantalla, no desde el archivo.
+- En `/haberes` cada pestana ahora solo acepta conceptos compatibles con su impacto: `Carga de haberes` usa conceptos `CREDIT` y `Carga de descuentos` usa conceptos `DEBIT`.
+- Se agrego en `/haberes` la opcion `Concepto manual` y un campo editable de descripcion para aplicar el mismo texto a toda la carga.
+- Si se elige un concepto del maestro, la operadora igualmente puede ajustar la descripcion final antes de importar.
+- En `Saldos` y en las vistas imprimibles, las cargas manuales ahora muestran solo la descripcion escrita por la operadora, sin prefijos tecnicos como `MANUAL -`.
+- Se saco de la pantalla `/movimientos` la tarjeta visible `Submenu / Items que suman y restan`.
+- La ruta `/movimientos/exportar` y el helper `lib/movement-export.ts` siguen existiendo en el codigo, pero ya no estan visibles en la pantalla principal; quedaron como candidato de limpieza futura si se confirma que no se van a usar.
+
 ## Como Usarlo
 
 - Agregar una entrada nueva cada vez que hagamos un arreglo, cambio relevante o decision tecnica.

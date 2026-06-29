@@ -13,7 +13,6 @@ type NavigationItem = {
 const navigation: NavigationItem[] = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/empleados", label: "Empleados" },
-  { href: "/conceptos", label: "ABM de Conceptos" },
   { href: "/movimientos", label: "Movimientos", exact: true },
   { href: "/movimientos/historial", label: "Historial" },
   { href: "/saldos", label: "Saldos" },
@@ -34,7 +33,9 @@ export function Sidebar() {
         {navigation.map((item) => {
           const isActive =
             item.href === "/movimientos"
-              ? pathname === "/movimientos" || pathname.startsWith("/movimientos/carga")
+              ? pathname === "/movimientos" ||
+                pathname.startsWith("/movimientos/carga") ||
+                pathname.startsWith("/movimientos/exportar")
               : item.exact
                 ? pathname === item.href
                 : pathname === item.href || pathname.startsWith(`${item.href}/`);
