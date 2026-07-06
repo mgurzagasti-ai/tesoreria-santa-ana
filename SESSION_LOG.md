@@ -47,6 +47,31 @@
 - Se saco de la pantalla `/movimientos` la tarjeta visible `Submenu / Items que suman y restan`.
 - La ruta `/movimientos/exportar` y el helper `lib/movement-export.ts` siguen existiendo en el codigo, pero ya no estan visibles en la pantalla principal; quedaron como candidato de limpieza futura si se confirma que no se van a usar.
 
+## 2026-06-30
+
+- Se libero nuevamente el puerto `3008` para poder levantar `npm run dev` cuando habia procesos `node` viejos bloqueando el arranque.
+- Se corrigio el manejo de sesion en `lib/auth.ts`: `getCurrentUser()` ya no intenta borrar cookies durante el render del layout, porque Next solo permite modificar cookies en `Server Actions` o `Route Handlers`.
+- Se corrigio el loop de redireccion entre `/login` y `/dashboard`: `proxy.ts` ya no redirige esas rutas solo por existencia de cookie, y ahora queda como guardia rapida unicamente para rutas privadas sin cookie.
+- Se agrego `/conceptos` al conjunto de rutas protegidas en `proxy.ts`.
+- Se detectaron y eliminaron movimientos duplicados del codigo `901 - GRATIFICACION CUOTA 9` para los legajos `826`, `829` y `832`, dejando un solo registro correcto por cada legajo.
+- Se corrigio la deduplicacion en `app/actions/haberes.ts` para que una misma importacion Excel no vuelva a insertar dos filas identicas dentro del mismo lote.
+- Se confirmo que en `/movimientos/historial` ya existe busqueda por `legajo`, `apellido`, `nombre`, `concepto` y `codigo` usando el campo de texto `q`.
+- Se agrando visualmente el campo de busqueda del historial en `app/globals.css` para que el filtro por legajo se vea mejor y sea mas comodo de usar.
+- Para retomar rapido en futuras sesiones conviene leer primero `SESSION_LOG.md` y usar `PROJECT_MEMORY.md` solo como contexto estable del proyecto.
+
+## 2026-07-06
+
+- Se agregaron campos explicitos en `/haberes` para definir `Periodo mes`, `Periodo año` y `Fecha de acreditacion` al cargar Excel.
+- La importacion de haberes/descuentos ahora usa esos valores para todas las filas revisadas, evitando que el sistema infiera julio por fecha actual, nombre del archivo o columnas ambiguas.
+- En `Saldos` se mantiene la columna como `Fecha`; esa fecha corresponde al valor elegido al cargar el Excel, no a la fecha de carga del archivo.
+- Se simplifico la cabecera de detalle en `Saldos`: se quitaron las tarjetas `Saldo de arranque`, `Haberes que suman`, `Descuentos que restan`, `Neto del periodo` y `Pendiente/A cobrar`, dejando solo la identificacion del empleado.
+- Se ajusto el filtro `Legajo` de `Saldos` para que tenga ancho compacto de 4 digitos y limite la carga a 4 caracteres.
+- Se compacto la grilla de filtros principales de `Saldos` para que legajo, empleado, estado, mes, año y fechas entren en una sola linea en escritorio.
+- Se ajustaron nuevamente los anchos de filtros y botones de `Saldos` para evitar desborde horizontal, y se corrigio el texto visible `Anio` por `Año`.
+- En la impresion individual de `Saldos` se quitaron del resumen las tarjetas `Saldo de arranque`, `Haberes que suman` y `Descuentos que restan`; se corrigio `Anio` por `Año`.
+- En la impresion individual de `Saldos` se quito del encabezado la linea de periodo y el bloque `Desde`, `Hasta` y `Pendiente/A cobrar`.
+- En la impresion individual de `Saldos` se quito tambien la fila `Saldo de arranque` de la tabla de detalle.
+
 ## Como Usarlo
 
 - Agregar una entrada nueva cada vez que hagamos un arreglo, cambio relevante o decision tecnica.

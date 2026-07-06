@@ -214,12 +214,13 @@ export default async function MovementHistoryPage({
                 <th>Periodo</th>
                 <th>Impacto</th>
                 <th>Importe</th>
+                <th>Accion</th>
               </tr>
             </thead>
             <tbody>
               {movements.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="empty-row">
+                  <td colSpan={10} className="empty-row">
                     No hay movimientos registrados.
                   </td>
                 </tr>
@@ -241,6 +242,11 @@ export default async function MovementHistoryPage({
                     </td>
                     <td>{movement.type === "CREDIT" ? "A favor" : "Descuento"}</td>
                     <td>{formatSignedCurrencyFromCents(getSignedAmountCents(movement))}</td>
+                    <td>
+                      <Link className="button ghost tiny" href={`/movimientos/${movement.id}/editar`}>
+                        Editar
+                      </Link>
+                    </td>
                   </tr>
                 ))
               )}

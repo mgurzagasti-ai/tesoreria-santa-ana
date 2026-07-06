@@ -2,7 +2,6 @@ import Link from "next/link";
 import { buildBalanceRows } from "@/lib/balances";
 import { prisma } from "@/lib/prisma";
 import {
-  formatCurrencyFromCents,
   formatSignedCurrencyFromCents,
   getBalanceLabel,
   getMonthName,
@@ -132,18 +131,6 @@ export default async function BalancesPage({
 
   const rows = buildBalanceRows(movements, visibleSelectedEmployee?.openingBalanceCents ?? 0);
   const displayRows = [...rows].reverse();
-  const openingBalanceCents = visibleSelectedEmployee?.openingBalanceCents ?? 0;
-  const incomeCents = rows.reduce(
-    (total, row) => total + (row.signedAmountCents > 0 ? row.signedAmountCents : 0),
-    0,
-  );
-  const deductionCents = rows.reduce(
-    (total, row) => total + (row.signedAmountCents < 0 ? Math.abs(row.signedAmountCents) : 0),
-    0,
-  );
-  const netPeriodCents = incomeCents - deductionCents;
-  const finalBalanceCents =
-    rows.at(-1)?.runningBalanceCents ?? openingBalanceCents;
   const balanceByEmployee = new Map<string, number>();
 
   for (const employee of employees) {
@@ -181,9 +168,16 @@ export default async function BalancesPage({
 
       <form className="panel filters-panel">
         <div className="filters-grid">
-          <label className="field">
+          <label className="field legajo-filter-field">
             <span>Legajo</span>
-            <input name="legajo" defaultValue={legajoQuery} placeholder="Ingresar legajo" />
+            <input
+              name="legajo"
+              defaultValue={legajoQuery}
+              inputMode="numeric"
+              maxLength={4}
+              pattern="[0-9]{1,4}"
+              placeholder="0000"
+            />
           </label>
 
           <label className="field">
@@ -224,7 +218,7 @@ export default async function BalancesPage({
           </label>
 
           <label className="field">
-            <span>Anio</span>
+            <span>Año</span>
             <input type="number" name="year" min="2020" max="2100" defaultValue={selectedYear} />
           </label>
 
@@ -310,30 +304,6 @@ export default async function BalancesPage({
               <p className="summary-label">Empleado</p>
               <strong className="summary-value">{visibleSelectedEmployee.legajo}</strong>
             </div>
-            <div className="panel summary-card">
-              <p className="summary-label">Saldo de arranque</p>
-              <strong className="summary-value">{formatSignedCurrencyFromCents(openingBalanceCents)}</strong>
-            </div>
-            <div className="panel summary-card">
-              <p className="summary-label">Haberes que suman</p>
-              <strong className="summary-value positive-text">{formatCurrencyFromCents(incomeCents)}</strong>
-            </div>
-            <div className="panel summary-card">
-              <p className="summary-label">Descuentos que restan</p>
-              <strong className="summary-value negative-text">{formatCurrencyFromCents(deductionCents)}</strong>
-            </div>
-            <div className="panel summary-card">
-              <p className="summary-label">Neto del periodo</p>
-              <strong className={`summary-value ${netPeriodCents < 0 ? "negative-text" : "positive-text"}`}>
-                {formatSignedCurrencyFromCents(netPeriodCents)}
-              </strong>
-            </div>
-            <div className="panel summary-card">
-              <p className="summary-label">{getBalanceLabel(finalBalanceCents)}</p>
-              <strong className={`summary-value ${finalBalanceCents < 0 ? "negative-text" : "positive-text"}`}>
-                {formatSignedCurrencyFromCents(finalBalanceCents)}
-              </strong>
-            </div>
           </div>
 
           <section className="panel data-panel">
@@ -361,7 +331,7 @@ export default async function BalancesPage({
                     <th>Concepto</th>
                     <th>Nro. vale</th>
                     <th>Mes</th>
-                    <th>Anio</th>
+                    <th>Año</th>
                     <th>Importe</th>
                     <th>Saldo</th>
                   </tr>

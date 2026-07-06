@@ -394,11 +394,24 @@ textarea {
   border: 1px solid rgba(90, 70, 43, 0.12);
 }
 
+.search-form input[type="search"] {
+  flex: 1.4;
+  min-width: 280px;
+}
+
+.search-form select {
+  flex: 0 1 190px;
+}
+
 .content-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.7fr) minmax(320px, 0.95fr);
   gap: 24px;
   align-items: start;
+}
+
+.haberes-import-shell {
+  width: 100%;
 }
 
 .filters-panel {
@@ -415,6 +428,10 @@ textarea {
   border: 1px solid rgba(159, 42, 29, 0.12);
 }
 
+.import-panel-reviewing {
+  padding: 32px;
+}
+
 .import-tabs {
   display: flex;
   flex-wrap: wrap;
@@ -427,20 +444,25 @@ textarea {
 
 .filters-grid {
   display: grid;
-  grid-template-columns: minmax(220px, 2fr) repeat(4, minmax(120px, 1fr)) auto;
-  gap: 16px;
+  grid-template-columns: 5.5rem minmax(14rem, 1.2fr) 8.5rem 8.5rem 7.5rem 9.25rem 9.25rem max-content;
+  gap: 10px;
   align-items: end;
+}
+
+.legajo-filter-field {
+  max-width: 5.5rem;
 }
 
 .filters-actions {
   display: flex;
   align-items: end;
-  gap: 12px;
+  gap: 8px;
 }
 
 .filters-actions .button {
-  min-width: 104px;
-  min-height: 60px;
+  min-width: 76px;
+  min-height: 46px;
+  padding-inline: 12px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -520,6 +542,126 @@ textarea {
 
 .import-submit-button:hover {
   box-shadow: 0 18px 34px rgba(159, 42, 29, 0.28);
+}
+
+.import-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.import-actions .import-submit-button {
+  flex: 1;
+}
+
+.import-review {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+  border-radius: 22px;
+  background: rgba(159, 42, 29, 0.04);
+  border: 1px solid rgba(159, 42, 29, 0.12);
+}
+
+.import-review-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+}
+
+.import-review-head h3,
+.import-review-editor h4 {
+  margin: 0;
+}
+
+.import-review-head p,
+.import-review-editor p {
+  margin-bottom: 0;
+}
+
+.import-review-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.import-review-stats span,
+.import-review-meta span {
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(90, 70, 43, 0.12);
+  font-size: 0.88rem;
+}
+
+.import-review-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(360px, 0.95fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.import-review-table-wrap {
+  min-height: 520px;
+  max-height: 72vh;
+  overflow: auto;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(90, 70, 43, 0.1);
+}
+
+.import-review-table th,
+.import-review-table td {
+  white-space: nowrap;
+}
+
+.import-review-table tbody tr {
+  cursor: pointer;
+}
+
+.import-review-row-active {
+  background: rgba(159, 42, 29, 0.12);
+}
+
+.import-review-row-duplicate {
+  background: rgba(159, 42, 29, 0.08);
+}
+
+.import-review-editor {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: rgba(255, 252, 247, 0.96);
+  border: 1px solid rgba(90, 70, 43, 0.12);
+  border-radius: 22px;
+  min-height: 520px;
+  position: sticky;
+  top: 28px;
+}
+
+.import-review-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.import-review-issues {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--muted);
+}
+
+.import-review-issues strong {
+  color: var(--brand-dark);
+}
+
+.import-review-issues ul {
+  margin: 0;
+  padding-left: 18px;
 }
 
 .operation-card {
@@ -949,7 +1091,8 @@ th {
   .filters-grid,
   .print-selection-grid,
   .report-header,
-  .print-summary {
+  .print-summary,
+  .import-review-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1030,7 +1173,9 @@ th {
 
   .search-form,
   .split-heading,
-  .section-heading {
+  .section-heading,
+  .import-review-head,
+  .import-actions {
     flex-direction: column;
     align-items: stretch;
   }

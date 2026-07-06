@@ -18,7 +18,8 @@ type ImportConceptLookup = {
 
 type ConceptLookup = ImportConceptLookup;
 
-type ParsedMovementRow = {
+export type ParsedMovementRow = {
+  rowNumber: number;
   employeeId: string;
   employeeLabel: string;
   conceptId: string | null;
@@ -34,7 +35,7 @@ type ParsedMovementRow = {
   importedFrom: string;
 };
 
-type ImportIssue = {
+export type ImportIssue = {
   rowNumber: number;
   message: string;
 };
@@ -42,6 +43,12 @@ type ImportIssue = {
 type ImportResult = {
   issues: ImportIssue[];
   parsedRows: ParsedMovementRow[];
+};
+
+type HaberesWorkbookOptions = {
+  movementDate?: Date;
+  periodMonth?: number;
+  periodYear?: number;
 };
 
 type ParsedBalanceRow = {
@@ -597,6 +604,7 @@ export async function parseHaberesWorkbook(
   fileName: string,
   employees: EmployeeLookup[],
   selectedConcept: ImportConceptLookup,
+  options: HaberesWorkbookOptions = {},
 ) {
   const workbook = XLSX.read(fileBuffer, { type: "array", cellDates: true });
   const firstSheetName = workbook.SheetNames[0];
@@ -672,6 +680,7 @@ export async function parseHaberesWorkbook(
     }
 
     const movementDate =
+      options.movementDate ??
       excelDateToIso(getCell(row, columns.fecha)) ??
       new Date(fallback.movementDate.getTime());
 
@@ -681,12 +690,14 @@ export async function parseHaberesWorkbook(
     const derivedPeriodFromFile = derivePeriodFromText(fileName);
 
     const month =
+      options.periodMonth ??
       parseMonth(rawPeriodValue, null) ??
       parseMonth(rawPeriodYearValue, null) ??
       derivedPeriodFromPeriodCell.month ??
       derivedPeriodFromFile.month ??
       movementDate.getMonth() + 1;
     const year =
+      options.periodYear ??
       parseYear(rawPeriodYearValue, null) ??
       derivedPeriodFromPeriodCell.year ??
       derivedPeriodFromFile.year ??
@@ -708,6 +719,7 @@ export async function parseHaberesWorkbook(
     }
 
     parsedRows.push({
+      rowNumber,
       employeeId: employee.id,
       employeeLabel: `${employee.legajo} - ${employee.apellido}, ${employee.nombre}`,
       conceptId: selectedConcept.id,

@@ -4,9 +4,7 @@ import { PrintButton } from "@/components/saldos/print-button";
 import { buildBalanceRows } from "@/lib/balances";
 import { prisma } from "@/lib/prisma";
 import {
-  formatCurrencyFromCents,
   formatSignedCurrencyFromCents,
-  getBalanceLabel,
   getMovementDisplayLabel,
   getMonthName,
 } from "@/lib/utils";
@@ -62,8 +60,6 @@ export default async function PrintableBalancePage({
   );
   const netPeriodCents = incomeCents - deductionCents;
   const finalBalanceCents = rows.at(-1)?.runningBalanceCents ?? openingBalanceCents;
-  const printablePeriod =
-    month && year ? `${getMonthName(Number(month))} ${year}` : `${from || "-"} al ${to || "-"}`;
 
   return (
     <section className="print-shell">
@@ -85,28 +81,10 @@ export default async function PrintableBalancePage({
             <p className="report-subtitle">
               {employee.legajo} - {employee.apellido}, {employee.nombre}
             </p>
-            <p className="report-subtitle">Periodo: {printablePeriod}</p>
-          </div>
-          <div className="report-range">
-            <span>Desde: {from || "-"}</span>
-            <span>Hasta: {to || "-"}</span>
-            <span>{getBalanceLabel(finalBalanceCents)}: {formatSignedCurrencyFromCents(finalBalanceCents)}</span>
           </div>
         </header>
 
         <section className="print-summary">
-          <div className="print-summary-card">
-            <span>Saldo de arranque</span>
-            <strong>{formatSignedCurrencyFromCents(openingBalanceCents)}</strong>
-          </div>
-          <div className="print-summary-card">
-            <span>Haberes que suman</span>
-            <strong>{formatCurrencyFromCents(incomeCents)}</strong>
-          </div>
-          <div className="print-summary-card">
-            <span>Descuentos que restan</span>
-            <strong>{formatCurrencyFromCents(deductionCents)}</strong>
-          </div>
           <div className="print-summary-card">
             <span>Neto del periodo</span>
             <strong>{formatSignedCurrencyFromCents(netPeriodCents)}</strong>
@@ -121,22 +99,12 @@ export default async function PrintableBalancePage({
               <th>Concepto</th>
               <th>Nro. vale</th>
               <th>Mes</th>
-              <th>Anio</th>
+              <th>Año</th>
               <th>Importe</th>
               <th>Saldo</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>-</td>
-              <td>-</td>
-              <td>Saldo de arranque</td>
-              <td>-</td>
-              <td>-</td>
-              <td>-</td>
-              <td>{formatSignedCurrencyFromCents(openingBalanceCents)}</td>
-              <td>{formatSignedCurrencyFromCents(openingBalanceCents)}</td>
-            </tr>
             {rows.map((row) => (
               <tr key={row.id}>
                 <td>{row.movementDate.toISOString().slice(0, 10)}</td>

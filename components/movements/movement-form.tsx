@@ -1,9 +1,10 @@
 "use client";
 
 import { useActionState, useEffect, useMemo, useState } from "react";
-import { createMovementAction } from "@/app/actions/movements";
+import { createMovementAction, updateMovementAction } from "@/app/actions/movements";
 import {
   type MovementFieldName,
+  type MovementFormValues,
   initialMovementFormState,
 } from "@/lib/movement-form";
 
@@ -24,11 +25,26 @@ type ConceptOption = {
 export function MovementForm({
   employees,
   concepts,
+  mode = "create",
+  initialValues,
 }: {
   employees: EmployeeOption[];
   concepts: ConceptOption[];
+  mode?: "create" | "edit";
+  initialValues?: MovementFormValues;
 }) {
-  const [state, formAction, pending] = useActionState(createMovementAction, initialMovementFormState);
+  const startingState = useMemo(
+    () => ({
+      ...initialMovementFormState,
+      values: {
+        ...initialMovementFormState.values,
+        ...initialValues,
+      },
+    }),
+    [initialValues],
+  );
+  const action = mode === "edit" ? updateMovementAction : createMovementAction;
+  const [state, formAction, pending] = useActionState(action, startingState);
   const values = state.values;
   const [legajoQuery, setLegajoQuery] = useState("");
   const [selectedEmployeeId, setSelectedEmployeeId] = useState(values.employeeId ?? "");
@@ -41,7 +57,7 @@ export function MovementForm({
   );
 
   useEffect(() => {
-    if (state.status === "success") {
+    if (state.status === "success" && mode === "create") {
       const form = document.getElementById("movement-form") as HTMLFormElement | null;
       form?.reset();
       setLegajoQuery("");
@@ -49,7 +65,7 @@ export function MovementForm({
       setSelectedConceptId(concepts[0]?.id ?? "");
       setConceptValue(concepts[0]?.description ?? "");
     }
-  }, [concepts, state.status]);
+  }, [concepts, mode, state.status]);
 
   useEffect(() => {
     if (state.status === "error") {
@@ -84,9 +100,16 @@ export function MovementForm({
   return (
     <form id="movement-form" action={formAction} className="panel form-grid">
       <div className="form-header">
-        <p className="eyebrow">Haberes</p>
-        <h2>Carga de haberes y descuentos</h2>
+        <p className="eyebrow">{mode === "edit" ? "Edicion" : "Haberes"}</p>
+        <h2>{mode === "edit" ? "Editar movimiento guardado" : "Carga de haberes y descuentos"}</h2>
+        {mode === "edit" ? (
+          <p className="muted">
+            Corrige empleado, concepto, fecha o importe del movimiento ya registrado.
+          </p>
+        ) : null}
       </div>
+
+      <input type="hidden" name="id" value={values.id ?? ""} />
 
       <label className={fieldClassName("employeeId")}>
         <span>Buscar legajo</span>
@@ -235,10 +258,14 @@ export function MovementForm({
       <input type="hidden" name="importedFrom" value={values.importedFrom ?? ""} />
 
       {state.status === "error" && state.message ? <p className="form-error field-full">{state.message}</p> : null}
-      {state.status === "success" ? <p className="form-success field-full">Movimiento registrado.</p> : null}
+      {state.status === "success" ? (
+        <p className="form-success field-full">
+          {mode === "edit" ? "Movimiento actualizado." : "Movimiento registrado."}
+        </p>
+      ) : null}
 
       <button className="button primary field-full" type="submit" disabled={pending}>
-        {pending ? "Guardando..." : "Guardar haber o movimiento"}
+        {pending ? "Guardando..." : mode === "edit" ? "Guardar cambios" : "Guardar haber o movimiento"}
       </button>
     </form>
   );

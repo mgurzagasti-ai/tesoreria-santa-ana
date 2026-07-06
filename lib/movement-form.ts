@@ -1,4 +1,5 @@
 export type MovementFormValues = {
+  id?: string;
   employeeId?: string;
   conceptId?: string;
   code?: string;
@@ -27,6 +28,7 @@ export const initialMovementFormState: MovementFormState = {
   message: null,
   fieldErrors: {},
   values: {
+    id: "",
     conceptId: "",
     code: "",
   },
