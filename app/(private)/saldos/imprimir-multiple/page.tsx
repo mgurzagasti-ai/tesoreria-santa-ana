@@ -4,7 +4,6 @@ import { buildBalanceRows } from "@/lib/balances";
 import { prisma } from "@/lib/prisma";
 import {
   formatSignedCurrencyFromCents,
-  getBalanceLabel,
   getMovementDisplayLabel,
   getMonthName,
 } from "@/lib/utils";
@@ -202,10 +201,6 @@ export default async function PrintableMultipleBalancesPage({
                         {employee.legajo} - {employee.apellido}, {employee.nombre}
                       </h2>
                     </div>
-                    <div className="compact-report-meta">
-                      <span>Periodo: {printablePeriod}</span>
-                      <span>Movimientos en rango: {summary.movementCount}</span>
-                    </div>
                   </header>
 
                   <table className="print-detail-table">
@@ -245,11 +240,6 @@ export default async function PrintableMultipleBalancesPage({
                     </tbody>
                   </table>
 
-                  <footer className="compact-report-footer">
-                    {getBalanceLabel(summary.finalBalanceCents)}:
-                    {" "}
-                    {formatSignedCurrencyFromCents(summary.finalBalanceCents)}
-                  </footer>
                 </section>
               );
             })}

@@ -915,6 +915,14 @@ th {
   text-transform: uppercase;
 }
 
+.report-title {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
 .report-subtitle {
   margin: 0;
   font-size: 1rem;

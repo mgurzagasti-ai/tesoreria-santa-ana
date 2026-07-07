@@ -50,15 +50,6 @@ export default async function PrintableBalancePage({
 
   const rows = buildBalanceRows(movements, employee.openingBalanceCents);
   const openingBalanceCents = employee.openingBalanceCents;
-  const incomeCents = rows.reduce(
-    (total, row) => total + (row.signedAmountCents > 0 ? row.signedAmountCents : 0),
-    0,
-  );
-  const deductionCents = rows.reduce(
-    (total, row) => total + (row.signedAmountCents < 0 ? Math.abs(row.signedAmountCents) : 0),
-    0,
-  );
-  const netPeriodCents = incomeCents - deductionCents;
   const finalBalanceCents = rows.at(-1)?.runningBalanceCents ?? openingBalanceCents;
 
   return (
@@ -77,25 +68,17 @@ export default async function PrintableBalancePage({
         <header className="report-header">
           <div className="report-brand">SANTA ANA S.R.L.</div>
           <div>
-            <h1>Detalle de movimientos y saldos</h1>
+            <h1 className="report-title">Detalle de movimientos y saldos</h1>
             <p className="report-subtitle">
               {employee.legajo} - {employee.apellido}, {employee.nombre}
             </p>
           </div>
         </header>
 
-        <section className="print-summary">
-          <div className="print-summary-card">
-            <span>Neto del periodo</span>
-            <strong>{formatSignedCurrencyFromCents(netPeriodCents)}</strong>
-          </div>
-        </section>
-
         <table className="report-table">
           <thead>
             <tr>
               <th>Fecha</th>
-              <th>Codigo</th>
               <th>Concepto</th>
               <th>Nro. vale</th>
               <th>Mes</th>
@@ -108,7 +91,6 @@ export default async function PrintableBalancePage({
             {rows.map((row) => (
               <tr key={row.id}>
                 <td>{row.movementDate.toISOString().slice(0, 10)}</td>
-                <td>{row.code ?? "-"}</td>
                 <td>
                   {getMovementDisplayLabel(row.category, row.concept)}
                 </td>
