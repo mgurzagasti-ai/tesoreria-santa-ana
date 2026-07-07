@@ -1,0 +1,123 @@
+GUIA PARA MODIFICAR Y PUBLICAR LA APP
+
+La app tiene dos formas de correr:
+
+1. Modo desarrollo
+   Se usa mientras estas haciendo cambios y probando.
+
+2. Modo produccion
+   Se usa cuando la app ya esta lista para que la vean las otras PCs.
+
+
+MODO DESARROLLO
+---------------
+
+Cuando vas a modificar la app, conviene arrancar el modo desarrollo:
+
+  .\restart-dev-3008.cmd
+
+Importante: en la terminal de VS Code / PowerShell hay que escribir el .\ adelante.
+Si se escribe solo restart-dev-3008.cmd, PowerShell puede no encontrar el archivo.
+
+Ese archivo hace dos cosas:
+
+  - Busca si hay algun proceso usando el puerto 3008.
+  - Lo cierra y levanta la app con:
+
+      npm run dev
+
+Despues trabajas y probas los cambios en:
+
+  http://localhost:3008
+
+En este modo los cambios se ven al momento, sin tener que compilar cada vez.
+
+
+MODO PRODUCCION
+---------------
+
+Cuando ya terminaste de modificar y queres que las otras PCs vean la version nueva,
+hay que compilar y levantar produccion.
+
+Ejecutar:
+
+  npm run build
+
+Ese comando genera la version compilada de la app.
+
+Luego levantar produccion con:
+
+  .\start-app-jorge.cmd
+
+La app queda disponible para las otras PCs en:
+
+  http://192.168.88.175:3008
+
+
+DIFERENCIA IMPORTANTE
+---------------------
+
+  npm run dev
+    Sirve para trabajar.
+    Toma los cambios al momento.
+
+  npm run start
+    Sirve para produccion.
+    Usa la ultima version compilada con npm run build.
+
+Por eso, si haces cambios y despues entras desde otra PC a:
+
+  http://192.168.88.175:3008
+
+pero seguis viendo la version vieja, normalmente falta hacer:
+
+  npm run build
+
+y reiniciar el servidor de produccion.
+
+Desde la version 1.0.1, la app muestra la version al pie de pagina. Despues de
+publicar, conviene mirar ese dato desde otra PC para confirmar que esta viendo
+la version nueva.
+
+
+RESUMEN RAPIDO
+--------------
+
+Para trabajar:
+
+  .\restart-dev-3008.cmd
+
+Probar en:
+
+  http://localhost:3008
+
+Cuando esta listo para publicar:
+
+  npm run build
+  .\start-app-jorge.cmd
+
+Ver desde las otras PCs:
+
+  http://192.168.88.175:3008
+
+
+SI EL PUERTO 3008 QUEDA OCUPADO
+-------------------------------
+
+Si la app no arranca o sigue mostrando cambios viejos, puede haber un proceso viejo
+usando el puerto 3008.
+
+En desarrollo, el archivo:
+
+  restart-dev-3008.cmd
+
+ya mata automaticamente el proceso viejo del puerto 3008 y vuelve a levantar la app.
+
+Para produccion, si hace falta, hay que cerrar el proceso viejo del puerto 3008 y
+volver a ejecutar:
+
+  npm run build
+  .\start-app-jorge.cmd
+
+Desde la version 1.0.1, .\start-app-jorge.cmd intenta cerrar automaticamente el
+proceso viejo del puerto 3008 antes de iniciar produccion.

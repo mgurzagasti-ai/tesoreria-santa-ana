@@ -4,10 +4,12 @@ import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
 
 export function PrivateShell({
+  appVersion,
   children,
   currentYear,
   userName,
 }: {
+  appVersion: string;
   children: React.ReactNode;
   currentYear: number;
   userName: string;
@@ -41,7 +43,7 @@ export function PrivateShell({
             <strong>Sistema Tesoreria Santa Ana SRL</strong>
             <p>Aplicacion desarrollada por Martin Urzagasti</p>
           </div>
-          <span>{currentYear}</span>
+          <span className="app-version">Version {appVersion} - {currentYear}</span>
         </footer>
       </main>
     </div>

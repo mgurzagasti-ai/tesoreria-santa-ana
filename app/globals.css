@@ -100,6 +100,14 @@ textarea {
   line-height: 0.98;
 }
 
+.login-version {
+  margin: 18px 0 0;
+  color: rgba(255, 248, 241, 0.82);
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
 .eyebrow {
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -346,6 +354,12 @@ textarea {
 .app-footer strong,
 .app-footer p {
   margin: 0;
+}
+
+.app-version {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
 }
 
 .stack-lg {

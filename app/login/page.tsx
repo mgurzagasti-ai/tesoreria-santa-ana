@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/auth/login-form";
 import { getCurrentUser } from "@/lib/auth";
+import packageJson from "@/package.json";
 
 export default async function LoginPage() {
   const user = await getCurrentUser();
@@ -28,6 +29,7 @@ export default async function LoginPage() {
             />
           </object>
           <h1>{appName}</h1>
+          <p className="login-version">Version {packageJson.version}</p>
         </div>
       </section>
 
