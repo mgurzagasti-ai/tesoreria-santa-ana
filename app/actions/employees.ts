@@ -4,11 +4,13 @@ import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
+import { parseEmployeesWorkbook } from "@/lib/employee-excel-import";
 import {
   type EmployeeFieldName,
   type EmployeeFormState,
   initialEmployeeFormState,
 } from "@/lib/employee-form";
+import { type EmployeeImportFormState, initialEmployeeImportFormState } from "@/lib/employee-import-form";
 import { toCents } from "@/lib/utils";
 import { employeeSchema } from "@/lib/validations";
 
@@ -156,4 +158,81 @@ export async function toggleEmployeeStatusAction(employeeId: string) {
   revalidatePath("/empleados");
   revalidatePath("/saldos");
   revalidatePath("/dashboard");
+}
+
+export async function importEmployeesExcelAction(
+  _: EmployeeImportFormState,
+  formData: FormData,
+): Promise<EmployeeImportFormState> {
+  await requireUser();
+
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    return {
+      ...initialEmployeeImportFormState,
+      status: "error",
+      message: "Selecciona un archivo Excel valido.",
+      fieldErrors: {
+        file: "Selecciona un archivo Excel valido.",
+      },
+    };
+  }
+
+  const extension = file.name.split(".").pop()?.toLowerCase();
+  if (!extension || !["xlsx", "xls"].includes(extension)) {
+    return {
+      ...initialEmployeeImportFormState,
+      status: "error",
+      message: "El archivo debe ser Excel (.xlsx o .xls).",
+      fieldErrors: {
+        file: "El archivo debe ser Excel (.xlsx o .xls).",
+      },
+    };
+  }
+
+  const existingEmployees = await prisma.employee.findMany({
+    select: {
+      legajo: true,
+      dni: true,
+      cuil: true,
+    },
+  });
+  const { parsedRows, issues } = await parseEmployeesWorkbook(await file.arrayBuffer(), existingEmployees);
+
+  if (parsedRows.length === 0) {
+    return {
+      status: "error",
+      message: issues[0]?.message ?? "No se encontraron empleados validos para importar.",
+      fieldErrors: {
+        file: "La planilla no contiene empleados importables.",
+      },
+      issues,
+    };
+  }
+
+  await prisma.employee.createMany({
+    data: parsedRows.map(({ rowNumber: _rowNumber, ...row }) => row),
+  });
+
+  revalidatePath("/empleados");
+  revalidatePath("/empleados/alta");
+  revalidatePath("/empleados/consulta");
+  revalidatePath("/saldos");
+  revalidatePath("/dashboard");
+
+  const issuePreview = issues
+    .slice(0, 3)
+    .map((issue) => `Fila ${issue.rowNumber}: ${issue.message}`)
+    .join(" | ");
+  const messageParts = [
+    `Importacion finalizada. Empleados creados: ${parsedRows.length}.`,
+    issues.length > 0 ? `Observaciones: ${issues.length}. ${issuePreview}` : null,
+  ].filter(Boolean);
+
+  return {
+    status: "success",
+    message: messageParts.join(" "),
+    fieldErrors: {},
+    issues,
+  };
 }

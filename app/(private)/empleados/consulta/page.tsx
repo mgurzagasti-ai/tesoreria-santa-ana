@@ -28,12 +28,25 @@ export default async function EmployeeQueryPage({
               ],
             }
           : undefined,
-        orderBy:
-          showAll && !hasQuery
-            ? [{ legajo: "asc" }]
-            : [{ status: "asc" }, { apellido: "asc" }, { nombre: "asc" }],
+        orderBy: [{ status: "asc" }, { apellido: "asc" }, { nombre: "asc" }],
       })
     : [];
+  const visibleEmployees =
+    showAll && !hasQuery
+      ? [...employees].sort((firstEmployee, secondEmployee) => {
+          const firstLegajo = Number(firstEmployee.legajo);
+          const secondLegajo = Number(secondEmployee.legajo);
+
+          if (Number.isFinite(firstLegajo) && Number.isFinite(secondLegajo)) {
+            return firstLegajo - secondLegajo;
+          }
+
+          return firstEmployee.legajo.localeCompare(secondEmployee.legajo, "es", {
+            numeric: true,
+            sensitivity: "base",
+          });
+        })
+      : employees;
 
   return (
     <section className="stack-lg">
@@ -66,18 +79,18 @@ export default async function EmployeeQueryPage({
           <div className="employees-summary">
             <div className="panel summary-card">
               <p className="summary-label">Total encontrados</p>
-              <strong className="summary-value">{employees.length}</strong>
+              <strong className="summary-value">{visibleEmployees.length}</strong>
             </div>
             <div className="panel summary-card">
               <p className="summary-label">Activos</p>
               <strong className="summary-value">
-                {employees.filter((employee) => employee.status === "ACTIVE").length}
+                {visibleEmployees.filter((employee) => employee.status === "ACTIVE").length}
               </strong>
             </div>
             <div className="panel summary-card">
               <p className="summary-label">Bajas</p>
               <strong className="summary-value">
-                {employees.filter((employee) => employee.status === "INACTIVE").length}
+                {visibleEmployees.filter((employee) => employee.status === "INACTIVE").length}
               </strong>
             </div>
           </div>
@@ -90,7 +103,7 @@ export default async function EmployeeQueryPage({
               </div>
             </div>
 
-            <EmployeeTable employees={employees} />
+            <EmployeeTable employees={visibleEmployees} />
           </section>
         </>
       ) : (

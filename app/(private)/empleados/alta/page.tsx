@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { EmployeeExcelImportForm } from "@/components/employees/employee-excel-import-form";
 import { EmployeeForm } from "@/components/employees/employee-form";
 import { getEmployeeCategories } from "@/lib/employee-categories";
 
@@ -18,6 +19,10 @@ export default async function EmployeeCreatePage() {
         <Link href="/empleados/consulta" className="button ghost">
           Ir a consulta
         </Link>
+      </div>
+
+      <div className="single-panel-wrap">
+        <EmployeeExcelImportForm />
       </div>
 
       <div className="single-panel-wrap">

@@ -42,6 +42,8 @@ export function EmployeeForm({
     return state.fieldErrors[field];
   }
 
+  const categoryListId = `employee-categories-${values.id ?? "new"}`;
+
   return (
     <form id={`employee-form-${title}`} action={formAction} className="panel form-grid">
       <div className="form-header">
@@ -97,19 +99,21 @@ export function EmployeeForm({
 
       <label className={fieldClassName(Boolean(getFieldError("categoria")))}>
         <span>Categoria</span>
-        <select
+        <input
           name="categoria"
+          list={categoryListId}
           defaultValue={values.categoria}
           required
           aria-invalid={Boolean(getFieldError("categoria"))}
-        >
-          <option value="">Seleccionar categoria</option>
+          placeholder="Escribir o seleccionar categoria"
+        />
+        <datalist id={categoryListId}>
           {categories.map((category) => (
             <option key={category} value={category}>
               {category}
             </option>
           ))}
-        </select>
+        </datalist>
         {getFieldError("categoria") ? (
           <small className="field-error-text">{getFieldError("categoria")}</small>
         ) : null}
