@@ -498,9 +498,8 @@ export async function parseBalanceWorkbook(
   employees: EmployeeLookup[],
 ) {
   const workbook = XLSX.read(fileBuffer, { type: "array", cellDates: true });
-  const firstSheetName = workbook.SheetNames[0];
 
-  if (!firstSheetName) {
+  if (workbook.SheetNames.length === 0) {
     return {
       issues: [{ rowNumber: 0, message: "El archivo no contiene hojas." }],
       parsedRows: [],
@@ -508,94 +507,94 @@ export async function parseBalanceWorkbook(
     } satisfies BalanceImportResult;
   }
 
-  const worksheet = workbook.Sheets[firstSheetName];
-  const matrix = XLSX.utils.sheet_to_json<unknown[]>(worksheet, {
-    header: 1,
-    defval: "",
-    raw: true,
-    blankrows: false,
-  });
+  for (const sheetName of workbook.SheetNames) {
+    const worksheet = workbook.Sheets[sheetName];
+    const matrix = XLSX.utils.sheet_to_json<unknown[]>(worksheet, {
+      header: 1,
+      defval: "",
+      raw: true,
+      blankrows: false,
+    });
 
-  if (matrix.length === 0) {
+    if (matrix.length === 0) {
+      continue;
+    }
+
+    const headerRowIndex = matrix.findIndex((row) => {
+      const normalized = row.map(normalizeText);
+      return (
+        normalized.some((cell) => legajoAliases.some((alias) => cell === normalizeText(alias))) &&
+        normalized.some((cell) => balanceAliases.some((alias) => cell.includes(normalizeText(alias))))
+      );
+    });
+
+    if (headerRowIndex < 0) {
+      continue;
+    }
+
+    const columns = detectBalanceColumnsFromHeader(matrix[headerRowIndex] ?? []);
+    if (columns.legajo === undefined || columns.balance === undefined) {
+      return {
+        issues: [
+          {
+            rowNumber: headerRowIndex + 1,
+            message: `No se pudieron identificar las columnas de legajo y saldo en la hoja ${sheetName}.`,
+          },
+        ],
+        parsedRows: [],
+        detectedAsBalanceWorkbook: true,
+      } satisfies BalanceImportResult;
+    }
+
+    const employeeByLegajo = new Map(employees.map((employee) => [employee.legajo, employee]));
+    const parsedRows: ParsedBalanceRow[] = [];
+    const issues: ImportIssue[] = [];
+    const dataRows = matrix.slice(headerRowIndex + 1);
+
+    dataRows.forEach((row, index) => {
+      const rowNumber = headerRowIndex + index + 2;
+
+      if (!row.some((cell) => !isEmptyCell(cell))) {
+        return;
+      }
+
+      const legajo = padLegajo(getCell(row, columns.legajo));
+      const employee = employeeByLegajo.get(legajo);
+
+      if (!legajo) {
+        issues.push({ rowNumber, message: "Fila sin legajo." });
+        return;
+      }
+
+      if (!employee) {
+        issues.push({ rowNumber, message: `No existe empleado con legajo ${legajo}.` });
+        return;
+      }
+
+      const rawBalance = parseLooseAmount(getCell(row, columns.balance));
+      if (rawBalance === null) {
+        issues.push({ rowNumber, message: `Saldo invalido o vacio para legajo ${legajo}.` });
+        return;
+      }
+
+      parsedRows.push({
+        employeeId: employee.id,
+        employeeLabel: `${employee.legajo} - ${employee.apellido}, ${employee.nombre}`,
+        balanceCents: Math.round(rawBalance * 100),
+      });
+    });
+
     return {
-      issues: [{ rowNumber: 0, message: "La hoja seleccionada no tiene filas con datos." }],
-      parsedRows: [],
-      detectedAsBalanceWorkbook: false,
-    } satisfies BalanceImportResult;
-  }
-
-  const headerRowIndex = matrix.findIndex((row) => {
-    const normalized = row.map(normalizeText);
-    return (
-      normalized.some((cell) => legajoAliases.some((alias) => cell === normalizeText(alias))) &&
-      normalized.some((cell) => balanceAliases.some((alias) => cell.includes(normalizeText(alias))))
-    );
-  });
-
-  if (headerRowIndex < 0) {
-    return {
-      issues: [],
-      parsedRows: [],
-      detectedAsBalanceWorkbook: false,
-    } satisfies BalanceImportResult;
-  }
-
-  const columns = detectBalanceColumnsFromHeader(matrix[headerRowIndex] ?? []);
-  if (columns.legajo === undefined || columns.balance === undefined) {
-    return {
-      issues: [
-        {
-          rowNumber: headerRowIndex + 1,
-          message: "No se pudieron identificar las columnas de legajo y saldo.",
-        },
-      ],
-      parsedRows: [],
+      issues,
+      parsedRows,
       detectedAsBalanceWorkbook: true,
     } satisfies BalanceImportResult;
   }
 
-  const employeeByLegajo = new Map(employees.map((employee) => [employee.legajo, employee]));
-  const parsedRows: ParsedBalanceRow[] = [];
-  const issues: ImportIssue[] = [];
-  const dataRows = matrix.slice(headerRowIndex + 1);
-
-  dataRows.forEach((row, index) => {
-    const rowNumber = headerRowIndex + index + 2;
-
-    if (!row.some((cell) => !isEmptyCell(cell))) {
-      return;
-    }
-
-    const legajo = padLegajo(getCell(row, columns.legajo));
-    const employee = employeeByLegajo.get(legajo);
-
-    if (!legajo) {
-      issues.push({ rowNumber, message: "Fila sin legajo." });
-      return;
-    }
-
-    if (!employee) {
-      issues.push({ rowNumber, message: `No existe empleado con legajo ${legajo}.` });
-      return;
-    }
-
-    const rawBalance = parseLooseAmount(getCell(row, columns.balance));
-    if (rawBalance === null) {
-      issues.push({ rowNumber, message: `Saldo invalido o vacio para legajo ${legajo}.` });
-      return;
-    }
-
-    parsedRows.push({
-      employeeId: employee.id,
-      employeeLabel: `${employee.legajo} - ${employee.apellido}, ${employee.nombre}`,
-      balanceCents: Math.round(rawBalance * 100),
-    });
-  });
-
   return {
-    issues,
-    parsedRows,
-    detectedAsBalanceWorkbook: true,
+    issues: [],
+    parsedRows: [],
+    detectedAsBalanceWorkbook: false,
   } satisfies BalanceImportResult;
 }
 

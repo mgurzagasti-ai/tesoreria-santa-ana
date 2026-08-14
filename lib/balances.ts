@@ -32,3 +32,25 @@ export function buildBalanceRows(movements: MovementForBalance[], openingBalance
     };
   });
 }
+
+export function buildBalanceRowsForDateRange(
+  movements: MovementForBalance[],
+  openingBalanceCents = 0,
+  from = "",
+) {
+  const rows = buildBalanceRows(movements, openingBalanceCents);
+  const fromDate = from ? new Date(from) : null;
+  const displayRows = fromDate
+    ? rows.filter((row) => row.movementDate >= fromDate)
+    : rows;
+  const rangeOpeningBalanceCents = displayRows[0]
+    ? displayRows[0].runningBalanceCents - displayRows[0].signedAmountCents
+    : rows.at(-1)?.runningBalanceCents ?? openingBalanceCents;
+  const finalBalanceCents = rows.at(-1)?.runningBalanceCents ?? rangeOpeningBalanceCents;
+
+  return {
+    rows: displayRows,
+    openingBalanceCents: rangeOpeningBalanceCents,
+    finalBalanceCents,
+  };
+}

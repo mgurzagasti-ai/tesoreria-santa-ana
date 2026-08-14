@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { buildBalanceRows } from "@/lib/balances";
+import { buildBalanceRowsForDateRange } from "@/lib/balances";
 import { prisma } from "@/lib/prisma";
 import {
   formatSignedCurrencyFromCents,
@@ -102,7 +102,6 @@ export default async function BalancesPage({
         where: {
           employeeId: selectedEmployeeId,
           movementDate: {
-            gte: derivedFrom ? new Date(derivedFrom) : undefined,
             lte: derivedTo ? new Date(`${derivedTo}T23:59:59.999`) : undefined,
           },
         },
@@ -117,7 +116,6 @@ export default async function BalancesPage({
               in: employeeIds,
             },
             movementDate: {
-              gte: derivedFrom ? new Date(derivedFrom) : undefined,
               lte: derivedTo ? new Date(`${derivedTo}T23:59:59.999`) : undefined,
             },
           },
@@ -129,7 +127,12 @@ export default async function BalancesPage({
         })
       : [];
 
-  const rows = buildBalanceRows(movements, visibleSelectedEmployee?.openingBalanceCents ?? 0);
+  const summary = buildBalanceRowsForDateRange(
+    movements,
+    visibleSelectedEmployee?.openingBalanceCents ?? 0,
+    derivedFrom,
+  );
+  const rows = summary.rows;
   const displayRows = [...rows].reverse();
   const balanceByEmployee = new Map<string, number>();
 

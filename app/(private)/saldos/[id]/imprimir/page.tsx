@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PrintButton } from "@/components/saldos/print-button";
-import { buildBalanceRows } from "@/lib/balances";
+import { buildBalanceRowsForDateRange } from "@/lib/balances";
 import { prisma } from "@/lib/prisma";
 import {
   formatSignedCurrencyFromCents,
@@ -41,16 +41,15 @@ export default async function PrintableBalancePage({
     where: {
       employeeId: id,
       movementDate: {
-        gte: from ? new Date(from) : undefined,
         lte: to ? new Date(`${to}T23:59:59.999`) : undefined,
       },
     },
     orderBy: [{ movementDate: "asc" }, { createdAt: "asc" }],
   });
 
-  const rows = buildBalanceRows(movements, employee.openingBalanceCents);
-  const openingBalanceCents = employee.openingBalanceCents;
-  const finalBalanceCents = rows.at(-1)?.runningBalanceCents ?? openingBalanceCents;
+  const summary = buildBalanceRowsForDateRange(movements, employee.openingBalanceCents, from);
+  const rows = summary.rows;
+  const finalBalanceCents = summary.finalBalanceCents;
 
   return (
     <section className="print-shell">

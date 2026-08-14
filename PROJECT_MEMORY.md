@@ -37,6 +37,10 @@ Este archivo guarda el contexto estable del proyecto para retomar trabajo sin vo
 - Para que otras PCs la vean, esta PC debe estar encendida y la app debe estar ejecutandose.
 - Para entrar desde otra PC se debe usar `http://IP-DE-ESTA-PC:3008`.
 - `SQLite` sirve para uso local o liviano, pero si varias PCs van a operar al mismo tiempo conviene evaluar una base servidor.
+- En `Saldos`, los rangos de legajos son solo filtros para seleccionar empleados a imprimir.
+- En `Saldos`, las fechas `Desde` y `Hasta` deben filtrar los movimientos visibles/impresos, pero el saldo corrido debe calcularse con el historial anterior necesario. Ejemplo confirmado el 2026-08-14: el legajo `009` con fechas `2026-07-23` a `2026-08-14` debe imprimir saldo final `0`, porque los movimientos previos explican el saldo de arranque del recorte.
+- La impresion multiple de saldos compara rangos de legajo numericamente. Un rango como `009` a `141` no debe incluir legajos de cuatro digitos como `1000`.
+- La importacion de saldos desde Excel debe buscar la hoja con columnas de `legajo` y `saldo` en todas las pestanas del libro, no solo en la primera.
 
 ## Forma De Trabajo Recomendada
 

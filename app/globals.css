@@ -1048,12 +1048,27 @@ th {
   line-height: 1.15;
 }
 
+.compact-report-topline {
+  display: flex;
+  align-items: baseline;
+  gap: 26px;
+  flex-wrap: wrap;
+}
+
 .compact-report-eyebrow {
   margin: 0;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-size: 0.68rem;
+}
+
+.compact-report-date-range {
+  margin: 0;
+  color: #8e2018;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.92rem;
+  font-weight: 700;
 }
 
 .compact-report-meta {
@@ -1069,6 +1084,7 @@ th {
   margin-top: auto;
   padding-top: 6px;
   border-top: 1px solid #d7cdbd;
+  text-align: right;
   font-size: 0.82rem;
   font-weight: 700;
 }

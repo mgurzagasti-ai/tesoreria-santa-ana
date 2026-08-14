@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { PrintButton } from "@/components/saldos/print-button";
-import { buildBalanceRows } from "@/lib/balances";
+import { buildBalanceRowsForDateRange } from "@/lib/balances";
 import { prisma } from "@/lib/prisma";
 import {
   formatSignedCurrencyFromCents,
@@ -44,6 +44,11 @@ function normalizeLegajo(value: string) {
   return digits ? digits.padStart(3, "0") : "";
 }
 
+function legajoToNumber(value: string) {
+  const parsed = Number(value.replace(/\D/g, ""));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 function parseLegajoSelection(listText: string, fromText: string, toText: string) {
   const parsedList = listText
     .split(/[,\s;]+/)
@@ -62,6 +67,29 @@ function parseLegajoSelection(listText: string, fromText: string, toText: string
   };
 }
 
+function matchesLegajoSelection(legajo: string, selection: ReturnType<typeof parseLegajoSelection>) {
+  if (selection.selected.has(legajo)) {
+    return true;
+  }
+
+  if (!selection.from && !selection.to) {
+    return false;
+  }
+
+  const legajoNumber = legajoToNumber(legajo);
+  const fromNumber = selection.from ? legajoToNumber(selection.from) : null;
+  const toNumber = selection.to ? legajoToNumber(selection.to) : null;
+
+  if (legajoNumber === null) {
+    return false;
+  }
+
+  return (
+    (fromNumber === null || legajoNumber >= fromNumber) &&
+    (toNumber === null || legajoNumber <= toNumber)
+  );
+}
+
 function chunkEmployees<T>(items: T[], size: number) {
   const chunks: T[][] = [];
 
@@ -72,15 +100,33 @@ function chunkEmployees<T>(items: T[], size: number) {
   return chunks;
 }
 
-function buildEmployeeSummary(employee: EmployeeWithMovements) {
-  const rows = buildBalanceRows(employee.movements, employee.openingBalanceCents);
-  const finalBalanceCents = rows.at(-1)?.runningBalanceCents ?? employee.openingBalanceCents;
+function buildEmployeeSummary(employee: EmployeeWithMovements, from: string) {
+  const summary = buildBalanceRowsForDateRange(
+    employee.movements,
+    employee.openingBalanceCents,
+    from,
+  );
 
   return {
-    rows,
-    finalBalanceCents,
+    rows: summary.rows,
+    openingBalanceCents: summary.openingBalanceCents,
+    finalBalanceCents: summary.finalBalanceCents,
     movementCount: employee.movements.length,
   };
+}
+
+function formatPrintableDate(value: string) {
+  if (!value) {
+    return "-";
+  }
+
+  const [year, month, day] = value.split("-");
+
+  if (!year || !month || !day) {
+    return value;
+  }
+
+  return `${day}/${month}/${year}`;
 }
 
 export const dynamic = "force-dynamic";
@@ -110,42 +156,21 @@ export default async function PrintableMultipleBalancesPage({
     month && year ? new Date(Number(year), Number(month), 0).toISOString().slice(0, 10) : to;
   const printablePeriod =
     month && year ? `${getMonthName(Number(month))} ${year}` : `${derivedFrom || "-"} al ${derivedTo || "-"}`;
+  const printableDateRange = `Fecha ${formatPrintableDate(derivedFrom)} hasta ${formatPrintableDate(derivedTo)}`;
 
   const selection = parseLegajoSelection(printLegajos, printFromLegajo, printToLegajo);
   let employees: EmployeeWithMovements[] = [];
 
   if (selection.hasSelection) {
-    employees = await prisma.employee.findMany({
+    const candidateEmployees = await prisma.employee.findMany({
       where: {
         ...(status !== "ALL" ? { status } : {}),
-        OR: [
-          ...(selection.selected.size > 0
-            ? [
-                {
-                  legajo: {
-                    in: [...selection.selected],
-                  },
-                },
-              ]
-            : []),
-          ...(selection.from || selection.to
-            ? [
-                {
-                  legajo: {
-                    gte: selection.from || undefined,
-                    lte: selection.to || undefined,
-                  },
-                },
-              ]
-            : []),
-        ],
       },
       orderBy: [{ legajo: "asc" }],
       include: {
         movements: {
           where: {
             movementDate: {
-              gte: derivedFrom ? new Date(derivedFrom) : undefined,
               lte: derivedTo ? new Date(`${derivedTo}T23:59:59.999`) : undefined,
             },
           },
@@ -153,6 +178,10 @@ export default async function PrintableMultipleBalancesPage({
         },
       },
     });
+
+    employees = candidateEmployees.filter((employee) =>
+      matchesLegajoSelection(employee.legajo, selection),
+    );
   }
 
   const sheets = chunkEmployees(employees, 2);
@@ -190,13 +219,16 @@ export default async function PrintableMultipleBalancesPage({
         sheets.map((sheet, index) => (
           <article key={index} className="print-sheet multi-print-sheet">
             {sheet.map((employee) => {
-              const summary = buildEmployeeSummary(employee);
+              const summary = buildEmployeeSummary(employee, derivedFrom);
 
               return (
                 <section key={employee.id} className="print-detail-card">
                   <header className="print-detail-header">
                     <div>
-                      <p className="compact-report-eyebrow">Detalle</p>
+                      <div className="compact-report-topline">
+                        <p className="compact-report-eyebrow">Detalle</p>
+                        <p className="compact-report-date-range">{printableDateRange}</p>
+                      </div>
                       <h2>
                         {employee.legajo} - {employee.apellido}, {employee.nombre}
                       </h2>
@@ -220,8 +252,8 @@ export default async function PrintableMultipleBalancesPage({
                         <td>-</td>
                         <td>Saldo de arranque</td>
                         <td>-</td>
-                        <td>{formatSignedCurrencyFromCents(employee.openingBalanceCents)}</td>
-                        <td>{formatSignedCurrencyFromCents(employee.openingBalanceCents)}</td>
+                        <td>{formatSignedCurrencyFromCents(summary.openingBalanceCents)}</td>
+                        <td>{formatSignedCurrencyFromCents(summary.openingBalanceCents)}</td>
                       </tr>
                       {summary.rows.map((row) => (
                         <tr key={row.id}>
@@ -240,6 +272,9 @@ export default async function PrintableMultipleBalancesPage({
                     </tbody>
                   </table>
 
+                  <footer className="compact-report-footer">
+                    <span>Saldo: {formatSignedCurrencyFromCents(summary.finalBalanceCents)}</span>
+                  </footer>
                 </section>
               );
             })}
